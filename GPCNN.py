@@ -4,6 +4,7 @@ import pickle
 import numpy as np
 import torch 
 from model import Net
+
 def unpickle(file):
 	with open(file, 'rb') as fo: 
 		dict = pickle.load(fo)

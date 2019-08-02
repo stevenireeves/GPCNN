@@ -80,9 +80,9 @@ pnt = [[ 0, -dy]
 			,[ dx,  0]
 			,[ 0,  dy]]
 kp = np.zeros((lx*ly, 2))
-start = -0.25; 
+start = -0.25 
 if lx == 4: 
-	start = -0.375;   
+	start = -0.375 
 for j in range(ly):
 	for i in range(lx):  
 		idk = i + lx*j
@@ -101,7 +101,7 @@ for i in range(lx*ly):
 #resolution for finely interpolated image 
 hf = hc*ly
 wf = wc*lx
-#img1 = sp.imresize(img, [hf,wf,3], 'bicubic', mode=None) 
+img1 = sp.imresize(img, [hf,wf,3], 'bicubic', mode=None) 
 img2 = np.zeros((hf,wf,3)) 
 
 interp(wc, hc, lx, ly, img, img2)
@@ -109,5 +109,5 @@ if lx==2:
 	tru = cv2.imread('image1.jpg')
 	err = img2 - tru
 	cv2.imwrite('err5.jpg',err)
-
+cv2.imwrite('interpbic_4.jpg', img1) 
 cv2.imwrite('interpgp_up4l01.jpg',img2)

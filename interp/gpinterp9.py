@@ -4,12 +4,13 @@ import cv2
 from matplotlib import pyplot as plt 
 
 def gp(sten, ksid, ks, Kinv):
-	one = np.ones(9)
-	mc = np.dot(one, Kinv.dot(sten))/(np.dot(one,Kinv.dot(one)))
+#	one = np.ones(9)
+#	mc = np.dot(one, Kinv.dot(sten))/(np.dot(one,Kinv.dot(one)))
 	weight = np.dot(ks[:,ksid], Kinv)
-	res = np.zeros(9)
-	res[:] = [x-mc for x in sten] 
-	iterp = mc + np.dot(weight, res)
+#	res = np.zeros(9)
+#	res[:] = [x-mc for x in sten] 
+#	iterp = mc + np.dot(weight, res)
+  iterp = np.dot(weights, sten) 
 	return iterp
 
 def loadsten(dat):

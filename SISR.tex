@@ -8,14 +8,12 @@
 \usepackage{bm}
 \usepackage{mathabx} 
 \usepackage{multirow}
-%\usepackage{epsfig}FD-Prim
 \usepackage{subfig}
 \usepackage{graphicx}
 \usepackage{rotating}
 \usepackage{listings}
 \usepackage{tikz, pgf}
 \usepackage{tikz-3dplot}
-%\usepackage{subcaption}
 
 \def\LW{\dimexpr.25\linewidth-.5em}
 
@@ -29,38 +27,24 @@
 
 \modulolinenumbers[5]
 
-%\journal{Journal of Computational Physics}
-
-%%%%%%%%%%%%%%%%%%%%%%%
-%% Elsevier bibliography styles
-%%%%%%%%%%%%%%%%%%%%%%%
-
-
-%% `Elsevier LaTeX' style
-%\bibliographystyle{elsarticle-num}
-%%%%%%%%%%%%%%%%%%%%%%%
-
-
 \begin{document}
-%\begin{frontmatter}
 
 %%%%%%%%%%%%%%%%%%
 %% TITLE 
 %%%%%%%%%%%%%%%%%%
 \title{A Hybrid Gaussian Process Convolution Neural Network Approach to Single Image Super Resolution}
 %% Group authors per affiliation:
-\author{Steven I. Reeves}
-%\author{Dongwook Lee}%\corref{mycorrespondingauthor}}
+\author{Steven I. Reeves \and Dongwook Lee}
+%\author[$\dagger$]{Dongwook Lee}%\corref{mycorrespondingauthor}}
 %\cortext[mycorrespondingauthor]{Corresponding author}
 %\ead{dlee79@ucsc.edu}
 
-%\ead{support@elsevier.com}
 
 \maketitle
 
-%\address[a]{Applied Mathematics, University of California, Santa Cruz, CA, U.S.A}
 \begin{abstract}
-In this manuscript we present a new interpolatation scheme for Adaptive Mesh Refinement (AMR) for
+Single image super-resolution is a notoriously difficult ill-posed problem. We present a novel hybrid Gaussian Process - Deep
+Convolutional Neural Network approach to solving this problem. 
 \end{abstract}
 
 %\begin{keyword}
@@ -79,6 +63,9 @@ In this manuscript we present a new interpolatation scheme for Adaptive Mesh Ref
 \section{Introduction}
 \label{sec:introduction}
 
+We propose a new method for upsampling low resolution images from a single base image alone. Single Image Super Resolution (SISR),
+is a difficult problem in the field of image processing and computer vision. 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%% Gaussian Processes %%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -89,7 +76,7 @@ section we give a brief overview on constructing a Gaussian Process Model. Gauss
 are a family of stochastic processes in which any finite collection of random variables sampled
 from this process are joint normally distributed. In a more general sense, Gaussian Processes sample functions
 from an infinite dimensional function space. The interpolating routine described in detail in section~\ref{sec:method},
-will be drawn from a data-informed distribution space trained on the coarse grid data.
+will be drawn from a data-informed distribution space trained on the low resolution data.
 
 To construct a Gaussian Process model, one needs to specify a \textit{prior probability distribution} for
  the function space. Samples (function values evaluated at known locations)
@@ -101,8 +88,7 @@ distribution} is generated given the prior and the samples.
 The construction of the posterior probability distribution over the function space is the heart of
 Gaussian Process Modeling. We can draw functions from this data adjusted space to generate an interpolating model.
  Specifically, the posterior may be used to probabilistically predict the value of a function at points where the
-function has not been previously sampled. We use the \textit{posterior mean}
-for our AMR prolongator.
+function has not been previously sampled.
 
 A Gaussian Process is a collection of random variables, in which any finite collection has a joint Gaussian distribution
 \cite{Rasmussen2005}\cite{pattern}.
@@ -155,12 +141,28 @@ and \textit{posterior covariance}
 U^2 \equiv k_{**} - \mathbf{k}_*^T\mathbf{K}^{-1}\cdot\mathbf{k}_*.
 \end{equation}
 
-In the application of AMR prolongation, we assume that the coarse grid data is perfectly sampled -- that is, there
-is no \textit{uncertainty}. Because of this, we do not need the posterior covariance, and the posterior mean will
-become the basis for our interpolation.
+\subsection{Choice of Covariance Kernel} 
+The choice of covariance kernel can have a dramatic effect on the model 
+constructed. Two common kernels that we investigate are the Squared-Exponential 
+kernel (see equation~\ref{eq:sqrexp}) and the Matern kernel(see equation~\ref{eq:matern}).  
 
-In the next subsections we describe two modeling schemes for AMR prolongation. The first is a description for
-prolongating pointwise states, and the second will illustrate the method for volume-averaged quantities.
+The squared exponential kernel essentially assumes that all functions drawn from a Gaussian Process generated with it 
+are $C^\infty$ continuous.  
+\begin{equation}
+K(\mathbf{x}, \mathbf{y}) = \Sigma^2 \exp{\left(-\frac{1}{2l^2}||\mathbf{x} - \mathbf{y}||^2\right)}
+\label{eq:sqrexp}
+\end{equation}
+
+\begin{equation}
+\label{eq:matern}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%% Algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% References %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -168,7 +170,7 @@ prolongating pointwise states, and the second will illustrate the method for vol
 
 \section*{References}
 \label{sec:references}
-
+\bibliographystyle{siam}
 \bibliography{mybibfile}
 
 

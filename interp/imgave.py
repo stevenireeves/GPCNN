@@ -17,14 +17,14 @@ def downsample(width, height, lx, ly, dat_in, dat_out):
 						dat_out[i,j,k] += dat_in[ii,jj,k]
 				dat_out[i,j,k] /= 4; 
 #Main Program
-img = cv2.imread('image1.jpg')
+img = cv2.imread('images/superbike_pixabay.jpg')
 hc, wc = img.shape[:2]
-hc /= 2
-wc /= 2
+hc //= 2
+wc //= 2
 lx = 2
 ly = 2
 
 img2 = np.zeros((hc,wc,3)) 
 
 downsample(wc, hc, lx, ly, img, img2)
-cv2.imwrite('downsampled.jpg',img2)
+cv2.imwrite('sbk_down.jpg',img2)

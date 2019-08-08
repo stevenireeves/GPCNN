@@ -10,15 +10,15 @@ class Net(nn.Module):
         super(Net, self).__init__()
         
         # First Layer
-        self.conv1 = nn.Conv2d(1, 32, 4)
+        self.conv1 = nn.Conv2d(in_channels=3,out_channels=32,kernel_size=4)
 #				self.pool1  = nn.MaxPool2d(2,2)
         
         # Second
-        self.conv2 = nn.Conv2d(32, 64, 3)
+        self.conv2 = nn.Conv2d(in_channels=32,out_channels=64,kernel_size=3)
 # 				self.pool2  = nn.MaxPool2d(2,2)
        
         # Third
-        self.conv3 = nn.Conv2d(64, 128, 2) 
+        self.conv3 = nn.Conv2d(in_channels=64,out_channels=128,kernel_size=2) 
 # 				self.pool3  = nn.MaxPool2d(2,2)
        
         # Final 
@@ -34,5 +34,4 @@ class Net(nn.Module):
 			x = self.conv3(x)
 			x = self.dense(x) # Combine the efforts of the convultions into an "enhanced image" 
 			x = x.view(64,64,-1) 
-			x = gp2d(64,64, 2,2,x,x) # Interpolate using a Guassian Process Model to get a HD-HR image
       return x

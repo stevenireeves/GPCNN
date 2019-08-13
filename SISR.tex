@@ -144,18 +144,29 @@ U^2 \equiv k_{**} - \mathbf{k}_*^T\mathbf{K}^{-1}\cdot\mathbf{k}_*.
 \subsection{Choice of Covariance Kernel} 
 The choice of covariance kernel can have a dramatic effect on the model 
 constructed. Two common kernels that we investigate are the Squared-Exponential 
-kernel (see equation~\ref{eq:sqrexp}) and the Matern kernel(see equation~\ref{eq:matern}).  
+kernel (see equation~\ref{eq:sqrexp}) and the Mat\'{e}rn kernel(see equation~\ref{eq:matern}).  
 
 The squared exponential kernel essentially assumes that all functions drawn from a Gaussian Process generated with it 
 are $C^\infty$ continuous.  
 \begin{equation}
-K(\mathbf{x}, \mathbf{y}) = \Sigma^2 \exp{\left(-\frac{1}{2l^2}||\mathbf{x} - \mathbf{y}||^2\right)}
+K_{sqr}(\mathbf{x}, \mathbf{y}) = \Sigma^2 \exp{\left(-\frac{1}{2l^2}||\mathbf{x} - \mathbf{y}||^2\right)}
 \label{eq:sqrexp}
 \end{equation}
+Equation~\ref{eq:sqrexp} shows that the squared exponential kernel has two hyperparameters, $\Sigma$ and 
+$l$. These hyperparameters indicate a prior variance and a length scale respectively. In the Mat\'{e}rn 
+family of kernels, we have 3 hyperparameters as indicated in equation~\ref{eq:matern}.
 
 \begin{equation}
+K_{mat}(\mathbf{x}, \mathbf{y}) = \Sigma^2 \frac{2^{1-\nu}}{\Gamma(\nu)}\left(\sqrt{2\nu}
+\frac{||\mathbf{x} - \mathbf{y}||}{l}\right)^\nu K_{\nu} \left(\sqrt{2\nu}
+\frac{||\mathbf{x} - \mathbf{y}||}{l}\right)
 \label{eq:matern}
 \end{equation}
+
+For the Mat\'{e}rn kernels, $\Sigma$ and $l$ are the same as they are in the squared-exponential. The 
+hyperparamter $\nu$ on the other hand, relates the level of "continuousness" of the functions that are 
+sampled from a Gaussian Process built with this kernel. The function $K_\nu$ is the modified Bessel 
+function of the second kind of order $\nu$. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% Algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

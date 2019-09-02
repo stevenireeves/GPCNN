@@ -43,6 +43,7 @@ def interp(width, height, lx, ly, dat_in, dat_out):
 
 #Main Program
 img = cv2.imread('sbk_down.jpg')
+img = img/255 
 hc, wc = img.shape[:2]
 #GP Parameters 
 dx = 1./wc 
@@ -80,8 +81,8 @@ K = np.zeros((5,5))
 for i in range(5): 
 	for j in range(5): 
 #		K[i,j] = matern5(pnt[i], pnt[j], l)
-		K[i,j] = matern3(pnt[i], pnt[j], l) 
-#		K[i,j] = sqrexp(pnt[i], pnt[j], l)
+#		K[i,j] = matern3(pnt[i], pnt[j], l) 
+		K[i,j] = sqrexp(pnt[i], pnt[j], l)
 
 Kinv = np.linalg.inv(K) 
 kp = np.zeros((lx*ly, 2))
@@ -97,9 +98,9 @@ for j in range(ly):
 ks = np.zeros((5,lx*ly))
 for idy in range(lx*ly): 
 	for idx in range(5): 
-#		ks[idx, idy] = sqrexp(kp[idy, :], pnt[idx][:],l)
+		ks[idx, idy] = sqrexp(kp[idy, :], pnt[idx][:],l)
 #		ks[idx, idy] = matern5(kp[idy, :], pnt[idx][:], l) 
-		ks[idx, idy] = matern3(kp[idy, :], pnt[idx][:], l) 
+#		ks[idx, idy] = matern3(kp[idy, :], pnt[idx][:], l) 
 
 
 for i in range(lx*ly): 
@@ -112,6 +113,7 @@ img1 = sp.imresize(img, [hf,wf,3], 'bilinear', mode=None)
 img2 = np.zeros((hf,wf,3)) 
 
 interp(wc, hc, lx, ly, img, img2)
+img2 = img2*255
 #if lx==2:
 tru = cv2.imread('images/superbike_pixabay.jpg')
 ht, wt = tru.shape[:2]
@@ -120,8 +122,7 @@ if ht != hf or wt != wf:
 else:
 	truesize = tru
 err = abs(img1 - truesize)
-print(img1, truesize, err)
 cv2.imwrite('true_resize.jpg', truesize)
 cv2.imwrite('err5blin.jpg',err)
 cv2.imwrite('interpblin2.jpg', img1) 
-cv2.imwrite('sbk_matern32.jpg',img2)
+cv2.imwrite('sbk_sqrexp2.jpg',img2)

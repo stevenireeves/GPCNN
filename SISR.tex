@@ -14,7 +14,7 @@
 \usepackage{listings}
 \usepackage{tikz, pgf}
 \usepackage{tikz-3dplot}
-
+\usepackage[linesnumbered, ruled]{algorithm2e}
 \def\LW{\dimexpr.25\linewidth-.5em}
 
 \makeatletter
@@ -166,20 +166,99 @@ K_{mat}(\mathbf{x}, \mathbf{y}) = \Sigma^2 \frac{2^{1-\nu}}{\Gamma(\nu)}\left(\s
 For the Mat\'{e}rn kernels, $\Sigma$ and $l$ are the same as they are in the squared-exponential. The 
 hyperparamter $\nu$ on the other hand, relates the level of "continuousness" of the functions that are 
 sampled from a Gaussian Process built with this kernel. The function $K_\nu$ is the modified Bessel 
-function of the second kind of order $\nu$. 
+function of the second kind of order $\nu$. Note that as $\nu$ goes to infinity the Mat\'{e}rn 
+covariance kernel converges to the squared-exponential covariance kernel~\cite{Rasmussen2005}.  
+
+Since images are typically processed as whole 0-255 integers, we will use the Mat\'{e}rn kernel to build our model.
+
+\subsection{Why use GP for interpolation?} 
+Traditional polynomial based interpolation methods are generally used to interpolation of images. This can be problematic 
+in a number of ways. Polynomial based methods are deterministic, and assume the function to be interpolated is continuous.
+Often when using a higher order polynomial, the interpolation is more accurate, but is more sensitive to discontinuities 
+in the sampled data. 
+
+Gaussian Processes provide a methodology to generate an accurate interpolating model utilizing a patch based 
+sampling method that requires less data to be qualitatively similar to bicubic interpolation. 
+
+\begin{figure}
+\begin{center}
+\includegraphics[scale=0.175]{paper_images/interpblin2.jpg}
+\includegraphics[scale=0.795]{paper_images/interpblin2_zoom.jpg}  
+\includegraphics[scale=0.175]{paper_images/interpbic2.jpg}
+\includegraphics[scale=0.775]{paper_images/interpbic2_zoom.jpg}  
+\includegraphics[scale=0.175]{paper_images/sbk_matern32.jpg}
+\includegraphics[scale=0.75]{paper_images/sbk_matern32_zoom.jpg}  
+\includegraphics[scale=0.175]{paper_images/superbike_pixabay.jpg}
+\includegraphics[scale=0.775]{paper_images/truth_zoom.jpg}
+\caption{\label{fig:gp} Top-Down, Bilinear Interpolation, Bicubic Interpolation, a Gaussian Process Mat\'{e}rn model and 
+the ground truth.}
+\end{center} 
+\end{figure}
+
+In figure~\ref{fig:gp} we have a photo of a racing motorcyclist that has been downsampled and then interpolated 
+using bilinear, bicubic and GP+Mat\'{e}rn $\nu = 3/2$ interpolations and are compared to the ground truth. Notice that the 
+result is qualitatively similar between the GP model and the bicubic interpolation. Recall that bicubic interpolation requires
+a pixel patch of 4$\times$4 to generate the 16 weights it needs to the interpolation. Our GP model requires a 5 pixel, cross 
+shaped stencil, resulting in a matrix multiplication of a $5\times5$ by a 5 element covariance vector to generate weights. 
+The bicubic interpolation requires a matrix multiplication of a $16\times 16$ matrix against the data to produce the necessary
+weights. Both models then perform dot production between the weight vectors and the stencil data to reviel and interpolated 
+point. The matrix for necessary for the bicubic interpolation is known, with a known inverse, whereas the covariance matrix 
+for the GP model must be constructed. However, the squared-exponential and Mat\'{e}rn kernels are isotropic that depend on 
+distance and not location. Therefore, this matrix can be constructed once for a given set of low resolution images with the 
+same pixel count. We will use the property throughout the method we construct.  
+
+
+\section{Enhancing Convolutional Neural Network} 
+
+Notice that even with higher accurate interpolation schemes, the information 
+contained in the lower resolution image does not allow for a complete reconstruction of the higher resolution 
+ground truth. We aim bridge the gap between the interpolated image and the ground truth through the use of an 
+enhance convolutional neural network (CNN). 
+
+Neural Networks have been employed with good results for many ill posed problems, including single image super resolution
+~\cite{IDN}\cite{Enhance}\cite{ISR_DCCN1}\cite{ISR_DCCN2}. 
+Many papers involving SISR use end-to-end deep neural networks or use a low 
+accuracy interpolation scheme like nearest neighbor. These approaches either 
+require the neural network to perform both the interpolation and enhancement, 
+or requires a stronger enhancement. 
+
+  
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% Algorithm %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\section{Hybrid GP-CNN algorithm} 
+Our algorithm is an agglomeration of patching, interpolation and enhancing. In order to work on images of any size, we
+partition the interpolated image into 128$\times$128 tiles to be enhanced. Then these tiles are stitched together to
+form a whole super-resolved image. This technique, allows for the enhancing neural network to utilize fewer weights, to be 
+easier trained, and for computational efficiency. 
 
+
+\begin{algorithm}[H]
+lri =  low-resolution image;
+ 
+interp\_i = gp\_interpolate(lri); 
+
+im\_array = partition(interp\_i); 
+
+\For{image in im\_array}{
+	enhanced = EnhanceNN(image);
+ 
+	enhance\_array.insert(enhanced); 
+} 
+
+high-resolution image = stitch(enhance\_array); 
+\caption{SISR Algorithm}  
+\end{algorithm}  
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%% References %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage
 
-\section*{References}
+\section*{}
 \label{sec:references}
 \bibliographystyle{siam}
 \bibliography{mybibfile}

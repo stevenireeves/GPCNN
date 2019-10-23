@@ -1,7 +1,7 @@
 #include "interp.h" 
 #include "Array" 
 
-GPinterp::GPinterp(std::vector<float> wts, std::vector<float> gam, 
+GPinterp::GPinterp(std::vector<<std::array<float, 9>> wts, std::vector<std::array<float, 9>> gam, 
 		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig){
 	weights = wts; 
 	gamma = gam;

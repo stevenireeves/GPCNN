@@ -1,21 +1,13 @@
 #include "GPinterp.h" 
 
-GPinterp::GPinterp(std::vector<std::array<<std::array<float, 9>, 9>> wts, std::vector<std::array<float, 9>> gam, 
-		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig){
-	weights = wts; 
-	gamma = gam;
-	vectors = vec; 
-	eigen = eig; 
-}
-
 float GPinterp::dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
 	float result = 0.f; 
 	for( int i = 0; i < 9; i++) result += vec1[i]*vec2[i]; 
 	return result; 
 }
 
-std::array<float, 9> GPinterp::load(const std::array<std::vector<std::vector<const float>>, 3> img_in,
-		    const int k, const int j, const int i){
+std::array<float, 9> GPinterp::load(const std::array<std::vector<std::vector<const float> >, 3> img_in,
+		    		    const int k, const int j, const int i){
 	std::array<float, 9> result; 
 	int bot = (j-1 < 0) ? 0 : j-1;
 	int left = (i-1 < 0) ? 0 : i-1; 
@@ -34,11 +26,12 @@ std::array<float, 9> GPinterp::load(const std::array<std::vector<std::vector<con
 }
 
 
-std::array<float, 9> GPinterp::get_beta(std::array<float, 9> leftbot, std::array<float, 9> bot, std::array<float, 9> righttbot,
+std::array<float, 9> GPinterp::get_beta(std::array<float, 9> leftbot, std::array<float, 9> bot, std::array<float, 9> rightbot,
 					std::array<float, 9> left   , std::array<float, 9> cen, std::array<float, 9> right    ,
 					std::array<float, 9> lefttop, std::array<float, 9> top, std::array<float, 9> righttop )
 {
 	// beta = f^T K^(-1) f = sum 1/lam *(V^T*f)^2 
+	std::array<float, 9> beta; 
  	beta[0] = 0.f; 
 	for(int i =0; i < 9; i++){
 		float prod = GPinterp::dot(vectors[i], leftbot); 
@@ -84,13 +77,14 @@ std::array<float, 9> GPinterp::get_beta(std::array<float, 9> leftbot, std::array
 		float prod = GPinterp::dot(vectors[i], righttop); 
 	       	beta[8] += 1.f/(eigen[i])*(prod*prod); 
 	}
+	return beta; 
 }
 
-std::array<float, 9> GPinterp::getMSweights(const std::array< const float, 9> &beta, const int ksid){
+std::array<float, 9> GPinterp::getMSweights(const std::array< float, 9> &beta, const int ksid){
 	std::array<float, 9> w8ts; 
 	float summ; 
 	for (int i = 0; i < 9; i++){
-		w8ts[i] = gam[ksid][i]/(std::pow(beta[i] + 1e-32), 2);	
+		w8ts[i] = gammas[ksid][i]/(std::pow(beta[i] + 1e-32, 2));	
 	}
 	return w8ts; 
 }
@@ -106,7 +100,7 @@ float GPinterp::combine(std::array<float, 9> leftbot, std::array<float, 9> bot, 
 	gp[2] = GPinterp::dot(weights[2], rightbot); 
 	gp[3] = GPinterp::dot(weights[3], left); 
 	gp[4] = GPinterp::dot(weights[4], cen); 
-	gp[5] = GPitnerp::dot(weights[5], right);
+	gp[5] = GPinterp::dot(weights[5], right);
 	gp[6] = GPinterp::dot(weights[6], lefttop); 
 	gp[7] = GPinterp::dot(weights[7], top); 
 	gp[8] = GPinterp::dot(weights[8], righttop); 
@@ -115,8 +109,8 @@ float GPinterp::combine(std::array<float, 9> leftbot, std::array<float, 9> bot, 
 	return summ; 
 }
 
-void GPinterp::MSinterp(const std::array<std::vector<std::vector<const float>>, 3> img_in, 
-                        std::array<std::vector<std::vector<float>>, 3> img_out, const int ry, const int rx){
+void GPinterp::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> img_in, 
+                        std::array<std::vector<std::vector<float> >, 3> img_out, const int ry, const int rx){
 	std::array<float, 9> beta = {};
 	std::array<float, 9> leftbot = {}; 
 	std::array<float, 9> bot = {};
@@ -152,7 +146,7 @@ void GPinterp::MSinterp(const std::array<std::vector<std::vector<const float>>, 
 					for(int idx = 0; idx < rx; idx++){
 						int ii = i + idx; 
 						int idk = idx + idy*rx; 
-						auto msweights = GPinterp::getMSweights(beta); 
+						auto msweights = GPinterp::getMSweights(beta, idk); 
 						img_out[k][jj][ii] = GPinterp::combine(leftbot, bot, rightbot ,
 									    	       left   , cen, right    ,
 								     	     	       lefttop, top, righttop , 
@@ -191,25 +185,25 @@ void GPinterp::MSinterp(const std::array<std::vector<std::vector<const float>>, 
 		//============== left =========================
 		int i = 0; 
 		for(j = 0; j < img_in[0].size(); j++){
-			cen = gpinterp::load(img_in, k, j, i); 
+			cen = GPinterp::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int jj = idy + j; 
 					int idk = idx + idy*rx;
-					img_out[k][jj][idx] = gpinterp::dot(weights[idk][4], cen); 
+					img_out[k][jj][idx] = GPinterp::dot(weights[idk][4], cen); 
 				}
 			}
 		}
 		//=============== right ======================
 		i = img_in[0][0].size()-1; 
 		for(j = 0; j < img_in[0].size(); j++){
-			cen = gpinterp::load(img_in, k, j, i); 
+			cen = GPinterp::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int ii = idx + i; 
 					int jj = idy + j; 
 					int idk = idx + idy*rx;
-					img_out[k][jj][ii] = gpinterp::dot(weights[idk][4], cen); 
+					img_out[k][jj][ii] = GPinterp::dot(weights[idk][4], cen); 
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-#include "GPinterp.h" 
+#include "GP.h" 
 
 float GPinterp::dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
 	float result = 0.f; 

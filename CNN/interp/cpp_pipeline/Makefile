@@ -1,10 +1,15 @@
 CPP = g++
-CFLAGS = -std=c++11 -lopencv_core -lopencv_imgproc
+CFLAGS = -std=c++11 
+PKG = -I /usr/local/include/opencv4/opencv -I /usr/local/include/opencv4 \
+-L /usr/local/lib -lopencv_dnn -lopencv_gapi -lopencv_highgui -lopencv_ml -lopencv_objdetect -lopencv_photo -lopencv_stitching -lopencv_video \
+-lopencv_calib3d -lopencv_features2d -lopencv_flann -lopencv_videoio -lopencv_imgcodecs -lopencv_imgproc -lopencv_core
 
-all: superres
+
+
+all: superres.ex
 
 superres.ex: main.cpp GP.o
-	$(CPP) $(CFLAGS) -o superres.ex main.cpp GP.o
+	$(CPP) $(CFLAGS) $(PKG) -o superres.ex main.cpp GP.o
 
 GP.o: GP.cpp GP.h
 	$(CPP) $(CFLAGS) -c GP.cpp

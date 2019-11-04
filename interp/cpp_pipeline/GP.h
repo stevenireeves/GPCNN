@@ -15,21 +15,24 @@ public:
 	std::vector<std::array<float, 9> > gammas;
 	std::array<std::array<float, 9>, 9> vectors; 
 	std::array<float, 9> eigen;
+	int insize[3];
 
 	/* Constructor */ 
 	GP(std::vector<std::array<std::array<float, 9>, 9> > wts, std::vector<std::array<float, 9> > gam, 
-		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig){
+		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig, const int size[3]){
 		weight = wts; 
 		gammas = gam;
 		vectors = vec; 
 		eigen = eig; 
+		insize[0] = size[0], insize[1] = size[1], insize[2] = size[2]; 
 	}
 
-	GP(const weights wgts){
+	GP(const weights wgts, const int size[3]){
 		weight = wgts.ks; 
 		gammas = wgts.gam; 
 		vectors = wgts.V; 
 		eigen = wgts.lam; 
+		insize[0] = size[0], insize[1] = size[1], insize[2] = size[2]; 
 	}
 
 	/* Member functions */ 
@@ -37,7 +40,7 @@ public:
 
 	void interp(const std::vector<const float> img_in, std::vector<float> img_out); 
 
-	std::array<float, 9> load(const std::array< std::vector< std::vector<const float > >, 3> img_in, 
+	std::array<float, 9> load(const std::vector<float> img_in, 
 		       		  const int k, const int j, const int i); 
 
 	std::array<float, 9> get_beta(std::array<float, 9> lbot, std::array<float, 9> bot,
@@ -53,8 +56,8 @@ public:
 		      std::array<float, 9> ltop, std::array<float, 9> top, std::array<float, 9> rtop, 
 		      std::array< std::array<float, 9>, 9> weight, std::array<float, 9> wsm);
 
-	void MSinterp(const std::array< std::vector<std::vector<const float> >, 3> img_in, 
-		      std::array< std::vector< std::vector<float> >, 3> img_out, const int ry, const int rx); 
+	void MSinterp(const std::vector<float> img_in, 
+		      std::vector<float> &img_out, const int ry, const int rx); 
 };
 
 #endif

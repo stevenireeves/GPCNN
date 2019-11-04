@@ -6,22 +6,22 @@ float GP::dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
 	return result; 
 }
 
-std::array<float, 9> GP::load(const std::array<std::vector<std::vector<const float> >, 3> img_in,
+std::array<float, 9> GP::load(const std::vector <float> img_in,
 		    		    const int k, const int j, const int i){
 	std::array<float, 9> result; 
 	int bot = (j-1 < 0) ? 0 : j-1;
 	int left = (i-1 < 0) ? 0 : i-1; 
-	int top = (j+1 > img_in[0].size()) ? img_in[0].size()-1 : j+1; 
-	int right = (i+1 > img_in[0][0].size()) ? img_in[0][0].size()-1 : i+1; 
-	result[0] = img_in[k][bot][left]; 
-	result[1] = img_in[k][bot][i]; 
-	result[2] = img_in[k][bot][right];
-        result[3] = img_in[k][j][left]; 
-	result[4] = img_in[k][j][i]; 
-	result[5] = img_in[k][j][right]; 
-	result[6] = img_in[k][top][left];
-	result[7] = img_in[k][top][i]; 
-	result[8] = img_in[k][top][right]; 
+	int top = (j+1 > insize[1]) ? insize[1]-1 : j+1; 
+	int right = (i+1 > insize[0]) ? insize[0]-1 : i+1; 
+	result[0] = img_in[(k*insize[2] + bot)*insize[1] + left]; 
+	result[1] = img_in[(k*insize[2] + bot)*insize[1] + i]; 
+	result[2] = img_in[(k*insize[2] + bot)*insize[1] + right];
+        result[3] = img_in[(k*insize[2] + j)*insize[1] + left]; 
+	result[4] = img_in[(k*insize[2] + j)*insize[1] + i]; 
+	result[5] = img_in[(k*insize[2] + j)*insize[1] + right]; 
+	result[6] = img_in[(k*insize[2] + top)*insize[1] + left];
+	result[7] = img_in[(k*insize[2] + top)*insize[1] + i]; 
+	result[8] = img_in[(k*insize[2] + top)*insize[1] + right]; 
 	return result; 	
 }
 
@@ -109,8 +109,8 @@ float GP::combine(std::array<float, 9> leftbot, std::array<float, 9> bot, std::a
 	return summ; 
 }
 
-void GP::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> img_in, 
-                        std::array<std::vector<std::vector<float> >, 3> img_out, const int ry, const int rx){
+void GP::MSinterp(const std::vector<float> img_in, 
+                        std::vector<float> &img_out, const int ry, const int rx){
 	std::array<float, 9> beta = {};
 	std::array<float, 9> leftbot = {}; 
 	std::array<float, 9> bot = {};
@@ -121,11 +121,11 @@ void GP::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> im
 	std::array<float, 9> lefttop = {};
 	std::array<float, 9> top = {}; 
 	std::array<float, 9> righttop = {};
-
-       	for( int k = 0; k < img_in.size(); k++){
+	const int outsize[3] = {insize[0]*rx, insize[1]*ry, insize[2]}; 
+       	for( int k = 0; k < insize[2]; k++){
 		/*------------------- Body -------------------------- */ 
-		for( int j = 1; j < img_in[0].size()-1; j++){
-			for( int i = 1; i < img_in[0][0].size()-1; i++){
+		for( int j = 1; j < insize[1]-1; j++){
+			for( int i = 1; i < insize[0]-1; i++){
 
 				leftbot = GP::load(img_in, k, j-1, i-1);
 				bot = GP::load(img_in, k, j-1, i);
@@ -138,8 +138,8 @@ void GP::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> im
 				righttop = GP::load(img_in, k, j+1, i);
 
 				beta = GP::get_beta(leftbot, bot, rightbot, 
-							  left   , cen, right   ,
-							  lefttop, top, righttop); 
+					            left   , cen, right   ,
+					  	    lefttop, top, righttop); 
 
 				for(int idy = 0; idy < ry; idy++){
 					int jj = j + idy; 
@@ -147,10 +147,10 @@ void GP::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> im
 						int ii = i + idx; 
 						int idk = idx + idy*rx; 
 						auto msweights = GP::getMSweights(beta, idk); 
-						img_out[k][jj][ii] = GP::combine(leftbot, bot, rightbot ,
-									    	       left   , cen, right    ,
-								     	     	       lefttop, top, righttop , 
-									     	       weight[idk], msweights); 	     
+						img_out[(k*outsize[2] + jj)*outsize[1] + ii] = GP::combine(leftbot, bot, rightbot ,
+									    	       			   left   , cen, right    ,
+								     	     	       			   lefttop, top, righttop , 
+									     	       			   weight[idk], msweights); 	     
 					}
 				}
 			}
@@ -159,51 +159,51 @@ void GP::MSinterp(const std::array<std::vector<std::vector<const float> >, 3> im
 		/*---------------- Borders ------------------------- */
 	       	//================ bottom =========================
 		int j = 0; 
-		for(int i = 0; i < img_in[0][0].size(); i++){
+		for(int i = 0; i < insize[0]; i++){
 			cen = GP::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int ii = idx + i; 
 					int idk = idx + idy*rx;
-					img_out[k][idy][ii] = GP::dot(weight[idk][4], cen); 
+					img_out[(k*outsize[2] + idy)*outsize[1] + ii] = GP::dot(weight[idk][4], cen); 
 				}
 			}
 		}
 		//================= top =======================
-		j = img_in[0].size()-1; 	
-		for(int i = 0; i < img_in[0][0].size(); i++){
+		j = insize[1]-1; 	
+		for(int i = 0; i < insize[0]; i++){
 			cen = GP::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int ii = idx + i;
 				        int jj = idy + j; 	
 					int idk = idx + idy*rx;
-					img_out[k][jj][ii] = GP::dot(weight[idk][4], cen); 
+					img_out[(k*outsize[2] + jj)*outsize[1] + ii] = GP::dot(weight[idk][4], cen); 
 				}
 			}
 		}
 		//============== left =========================
 		int i = 0; 
-		for(j = 0; j < img_in[0].size(); j++){
+		for(j = 0; j < insize[1]; j++){
 			cen = GP::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int jj = idy + j; 
 					int idk = idx + idy*rx;
-					img_out[k][jj][idx] = GP::dot(weight[idk][4], cen); 
+					img_out[(k*outsize[2] + jj)*outsize[1] + idx] = GP::dot(weight[idk][4], cen); 
 				}
 			}
 		}
 		//=============== right ======================
-		i = img_in[0][0].size()-1; 
-		for(j = 0; j < img_in[0].size(); j++){
+		i = insize[0]-1; 
+		for(j = 0; j < insize[1]; j++){
 			cen = GP::load(img_in, k, j, i); 
 			for(int idy = 0; idy < ry; idy++){
 				for(int idx = 0; idx < rx; idx++){
 					int ii = idx + i; 
 					int jj = idy + j; 
 					int idk = idx + idy*rx;
-					img_out[k][jj][ii] = GP::dot(weight[idk][4], cen); 
+					img_out[(k*outsize[2] + jj)*outsize[1] + ii] = GP::dot(weight[idk][4], cen); 
 				}
 			}
 		}

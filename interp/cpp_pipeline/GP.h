@@ -20,7 +20,7 @@ public:
 	/* Constructor */ 
 	GP(std::vector<std::array<std::array<float, 9>, 9> > wts, std::vector<std::array<float, 9> > gam, 
 		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig, const int size[3]){
-		weight = wts; 
+		weight = wts;
 		gammas = gam;
 		vectors = vec; 
 		eigen = eig; 
@@ -30,8 +30,8 @@ public:
 	GP(const weights wgts, const int size[3]){
 		weight = wgts.ks; 
 		gammas = wgts.gam; 
-		vectors = wgts.V; 
-		eigen = wgts.lam; 
+		vectors = wgts.V;
+		eigen = wgts.lam;
 		insize[0] = size[0], insize[1] = size[1], insize[2] = size[2]; 
 	}
 

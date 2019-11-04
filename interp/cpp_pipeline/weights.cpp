@@ -1,8 +1,6 @@
 #include "weights.h"
 #include "kernels.h"
 #include <iostream> 
-#include <fstream> 
-#include <iomanip>
 #include <lapacke.h> 
 
 
@@ -27,7 +25,7 @@ weights::weights (const int Ratio[], const float del[])
     // They are only used to construct the weights w = ks^T Kinv 
     // and gam = Rinv Q^T kt; 
     // ks, gam, lam and V are part of the class and will be used in the main interpolation routine. 
-    gam.resize(r[0]*r[1], std::array<float, 9>()); 
+    gam.resize(r[0]*r[1], std::array<float, 9>());
     GetKtotks(Ktot, kt);
 
     for(int i = 0; i < r[0]*r[1]; ++i){
@@ -84,7 +82,7 @@ weights::GetK(std::array<std::array<float, 9>, 9> &K, std::array<std::array<floa
 //Small K
     for(int i = 0; i < 9; ++i){
         for(int j = i; j < 9; ++j){
-            K[i][j] = matern3(pnt[i], pnt[j], l);
+            K[i][j] = matern3(pnt[i], pnt[j], l, dx);
             K[j][i] = K[i][j]; 
         }
     }
@@ -97,7 +95,7 @@ weights::GetK(std::array<std::array<float, 9>, 9> &K, std::array<std::array<floa
 
     for(int i = 0; i < 25; ++i)
         for(int j = i; j <25; ++j){
-            Ktot[i][j] = matern3(spnt[i], spnt[j], l); 
+            Ktot[i][j] = matern3(spnt[i], spnt[j], l, dx); 
             Ktot[j][i] = Ktot[i][j]; 
         }
 }
@@ -108,21 +106,22 @@ weights::GetK(std::array<std::array<float, 9>, 9> &K, std::array<std::array<floa
 void
 weights::Decomp(std::array<std::array<float, 9>, 9> &K, std::array<std::array<float, 25>, 25>  &Kt)
 {
-    std::array<float, 81> kt; 
+    std::array<float, 81> kt = {}; 
     for(int i = 0; i < 9; i++) 
-        for(int j = 0; j < 9; j++) 
-            kt[i*9+j] = K[i][j]; 
-    int info = LAPACKE_spotrf(LAPACK_ROW_MAJOR, 'U', 9, kt.data(), 9); 
+        for(int j = i; j < 9; j++) 
+            kt[i*9+j] = K[j][i]; 
+
+    int info = LAPACKE_spotrf(LAPACK_ROW_MAJOR, 'U', 9, kt.data(), 9);
      for(int i = 0; i < 9; i++)
         for(int j = i; j < 9; j++){
             K[i][j] = kt[i*9+j];
             K[j][i] = K[i][j]; 
         } 
- 
+
     std::vector<float> temp(625, 0); 
     for(int i = 0; i < 25; i++)
         for(int j = 0; j < 25; j++)
-            temp[j+i*13] = Kt[i][j]; 
+            temp[j+i*25] = Kt[j][i]; 
     info = LAPACKE_spotrf(LAPACK_ROW_MAJOR, 'U', 25, temp.data(), 25); 
      for(int i = 0; i < 25; i++)
         for(int j = i; j < 25; j++){
@@ -172,30 +171,30 @@ weights::GetKs(const std::array<std::array< float, 9>, 9> K)
      for(int i = 0; i < r[0]*r[1]; ++i){
         for(int j = 0; j < 9; ++j){
 	    temp[0] = spnt[j][0] - 1.f, temp[1] = spnt[j][1] - 1.f; //lbot
-	    ks[i][0][j] = matern3(pnt[i], temp, l); 
+	    ks[i][0][j] = matern3(pnt[i], temp, l, dx); 
 
             temp[0] = spnt[j][0], temp[1] = spnt[j][1] - 1.f; //bot
-            ks[i][1][j] = matern3(pnt[i], temp, l);
+            ks[i][1][j] = matern3(pnt[i], temp, l, dx);
 
 	    temp[0] = spnt[j][0] + 1.f, temp[1] = spnt[j][1] - 1.f; //rbot
-	    ks[i][2][j] = matern3(pnt[i], temp, l);     
+	    ks[i][2][j] = matern3(pnt[i], temp, l, dx);     
 
             temp[0] = spnt[j][0] - 1.f, temp[1] = spnt[j][1]; //left
-            ks[i][3][j] = matern3(pnt[i], temp, l);
+            ks[i][3][j] = matern3(pnt[i], temp, l, dx);
 
-            ks[i][4][j] = matern3(pnt[i], spnt[j], l); //cen
+            ks[i][4][j] = matern3(pnt[i], spnt[j], l, dx); //cen
 
             temp[0] = spnt[j][0] + 1.f, temp[1] = spnt[j][1]; //right
-            ks[i][5][j] = matern3(pnt[i], temp, l);
+            ks[i][5][j] = matern3(pnt[i], temp, l, dx);
    
             temp[0] = spnt[j][0] - 1.f, temp[1] = spnt[j][1] + 1.f;
-            ks[i][6][j] = matern3(pnt[i], temp, l); //ltop
+            ks[i][6][j] = matern3(pnt[i], temp, l, dx); //ltop
 
             temp[0] = spnt[j][0], temp[1] = spnt[j][1] + 1.f;
-            ks[i][7][j] = matern3(pnt[i], temp, l); //top
+            ks[i][7][j] = matern3(pnt[i], temp, l, dx); //top
 
             temp[0] = spnt[j][0] +1.f, temp[1] = spnt[j][1] + 1.f; 
-            ks[i][8][j] = matern3(pnt[i], temp, l); //rtop
+            ks[i][8][j] = matern3(pnt[i], temp, l, dx); //rtop
         }
      //Backsubstitutes for k^TK^{-1} 
         for(int k = 0; k < 9; ++k)
@@ -246,7 +245,7 @@ weights::GetKtotks(const std::array<std::array<float, 25>, 25> K1, std::vector<s
 
     for(int i = 0; i < r[0]*r[1]; i++){
        for (int j = 0; j < 25; j++){
-            kt[i][j] = matern3(pnt[i], spnt[j], l); 
+            kt[i][j] = matern3(pnt[i], spnt[j], l, dx); 
        }
        cholesky<25>(kt[i], K1); 
     } 
@@ -261,7 +260,7 @@ weights::GetGamma(std::array<std::array<float, 9>, 9> const& k,
              std::array<float,9> &ga)
 {
 //Extended matrix Each column contains the vector of coviarances corresponding 
-//to each sample (weno-like stencil)
+//to each sample (weno-like stencil, dx)
 
 
     std::array<float, 225> A =
@@ -295,7 +294,9 @@ weights::GetGamma(std::array<std::array<float, 9>, 9> const& k,
     int m = 25, n = 9, nrhs = 1; 
     int lda = 9, ldb = 1, lwork = -1, info; 
     float temp[25]; 
-    for(int i = 0; i < 25; i++) temp[i] = kt[i]; 
+    for(int i = 0; i < 25; i++){
+	    temp[i] = kt[i];
+    }
     float workt;
     info = LAPACKE_sgels(LAPACK_ROW_MAJOR, 'N', m, n, nrhs, A.data(), lda, temp, ldb);
     for(int i = 0; i < 9; ++i) ga[i] = temp[i];
@@ -319,13 +320,13 @@ weights::GetEigen()
                              {-1,  1}, {0,  1}, {1,  1}}}; 
 
     for (int j = 0; j < 9; ++j){
-        for(int i = j; i < 9; ++i){
-             A[i + j*9] = matern3(pnt[i], pnt[j], sig); //this is K_sig
+        for(int i = 0; i < 9; ++i){
+             A[i + j*9] = matern3(pnt[i], pnt[j], sig, dx); //this is K_sig
         }
     }
 
     int N = 9, lda = 9, info, lwork;
-    LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam.data());  
+    LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam.data()); 
     for (int j = 0; j < 9; ++j){
         for(int i = 0; i < 9; ++i) V[i][j] =  A[i + j*5];
     }

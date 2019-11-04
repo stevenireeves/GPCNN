@@ -1,3 +1,4 @@
+#include <iostream>
 #include "GP.h" 
 
 float GP::dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
@@ -139,14 +140,13 @@ void GP::MSinterp(const std::vector<float> img_in,
 
 				beta = GP::get_beta(leftbot, bot, rightbot, 
 					            left   , cen, right   ,
-					  	    lefttop, top, righttop); 
-
+					  	    lefttop, top, righttop);
 				for(int idy = 0; idy < ry; idy++){
 					int jj = j + idy; 
 					for(int idx = 0; idx < rx; idx++){
 						int ii = i + idx; 
 						int idk = idx + idy*rx; 
-						auto msweights = GP::getMSweights(beta, idk); 
+						auto msweights = GP::getMSweights(beta, idk);
 						img_out[(k*outsize[2] + jj)*outsize[1] + ii] = GP::combine(leftbot, bot, rightbot ,
 									    	       			   left   , cen, right    ,
 								     	     	       			   lefttop, top, righttop , 

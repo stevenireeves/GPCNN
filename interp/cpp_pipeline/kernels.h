@@ -3,11 +3,13 @@
 #include <cmath>
 #include <array>
 
-float matern3(std::array<float, 2> x, std::array<float, 2> y, float rho){
+float matern3(std::array<float, 2> x, std::array<float, 2> y, float rho, float dx[]){
 	float arg = 0;
-	float norm = 0; 
+	float norm = 0;
+	float x1[2] = {x[0]*dx[0], x[1]*dx[1]}; 
+	float y1[2] = {y[0]*dx[0], y[1]*dx[1]}; 
 	for(int i = 0; i < x.size(); ++i)
-	       	norm += (x[i] - y[i])*(x[i] - y[i]);
+	       	norm += (x1[i] - y1[i])*(x1[i] - y1[i]);
 	norm = std::sqrt(norm);
 	arg = std::sqrt(3)*(norm/rho);
 	return (1 + arg)*std::exp(-arg);

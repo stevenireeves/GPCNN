@@ -12,8 +12,8 @@ superres.ex: main.cpp GP.o weights.o
 	$(CPP) $(CFLAGS) $(PKG) -o superres.ex main.cpp GP.o weights.o
 
 weights.o: weights.cpp weights.h
-	$(CPP) $(CFLAGS) -c wieghts.cpp
-GP.o: GP.cpp GP.h
+	$(CPP) $(CFLAGS) -c weights.cpp
+GP.o: GP.cpp GP.h weights.h
 	$(CPP) $(CFLAGS) -c GP.cpp
 
 

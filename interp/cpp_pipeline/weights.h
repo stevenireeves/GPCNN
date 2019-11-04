@@ -18,11 +18,11 @@ class weights
     //
     // Eigen Values of Covariance Matrix
     //
-    float lam[9] = {}; 
+    std::array<float, 9> lam = {}; 
     //
     //  Eigen Vectors of Covariance Matrix
     //
-    float V[9][9] = {};
+    std::array<std::array<float, 9>, 9> V = {};
     //
     //  Weights to be applied for interpolation
     //

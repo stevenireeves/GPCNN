@@ -325,7 +325,7 @@ weights::GetEigen()
     }
 
     int N = 9, lda = 9, info, lwork;
-    LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam);  
+    LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam.data());  
     for (int j = 0; j < 9; ++j){
         for(int i = 0; i < 9; ++i) V[i][j] =  A[i + j*5];
     }

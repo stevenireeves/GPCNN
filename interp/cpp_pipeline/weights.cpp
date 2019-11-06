@@ -10,8 +10,7 @@ weights::weights (const int Ratio[], const float del[])
     dx[0] = del[0], dx[1] = del[1]; 
     r[0] = Ratio[0], r[1] = Ratio[1];
     l = 12.*std::min(dx[0], dx[1]);
-    sig = 3.*std::min(dx[0],dx[1]);
-    const int expfactor = r[0]*r[1];  
+    sig = 3.*std::min(dx[0], dx[1]);
     std::array<std::array<float, 9>, 9> K = {}; //The same for every ratio;  
     std::array<std::array<float, 25>, 25> Ktot = {}; // The same for every ratio; 
     std::vector<std::array<float, 25> > kt(r[0]*r[1], std::array<float, 25>{{0}});
@@ -292,21 +291,13 @@ weights::GetGamma(std::array<std::array<float, 9>, 9> const& k,
     
  
     int m = 25, n = 9, nrhs = 1; 
-    int lda = 9, ldb = 1, lwork = -1, info; 
+    int lda = 9, ldb = 1, info; 
     float temp[25]; 
     for(int i = 0; i < 25; i++){
 	    temp[i] = kt[i];
     }
-    float workt;
     info = LAPACKE_sgels(LAPACK_ROW_MAJOR, 'N', m, n, nrhs, A.data(), lda, temp, ldb);
     for(int i = 0; i < 9; ++i) ga[i] = temp[i];
-
-}
- 
-extern "C"
-{
- void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,
-                double* w, double* work, int* lwork, int* info );
 }
  
 
@@ -324,10 +315,25 @@ weights::GetEigen()
              A[i + j*9] = matern3(pnt[i], pnt[j], sig, dx); //this is K_sig
         }
     }
-
+	
+/*    auto a = A.data(); 
+    for(int j = 0; j < 9; ++j){
+	    for(int i = 0; i < 9; ++i) std::cout<< a[i + j*9] << '\t'; 
+	    std::cout<<std::endl; 
+    }
+    std::cin.get(); */
     int N = 9, lda = 9, info, lwork;
     LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam.data()); 
     for (int j = 0; j < 9; ++j){
-        for(int i = 0; i < 9; ++i) V[i][j] =  A[i + j*5];
+        for(int i = 0; i < 9; ++i) V[i][j] =  A[i + j*9];
     }
+/*    std::cout<<"EigenVectors"<<std::endl;
+    for(int j = 0; j < 9; ++j){
+	    for(int i = 0; i < 9; ++i) std::cout<< A[i + j*9] << '\t'; 
+	    std::cout<<std::endl; 
+    }
+    std::cin.get(); 
+    std::cout<<"EigenValues"<<std::endl;
+    for(int i = 0; i < 9; i++) std::cout<<lam[i] << std::endl; 
+    std::cin.get(); */
 }

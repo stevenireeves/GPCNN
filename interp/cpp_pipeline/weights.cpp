@@ -1,6 +1,7 @@
 #include "weights.h"
 #include "kernels.h"
-#include <iostream> 
+#include <iostream>
+#include <iomanip> 
 #include <lapacke.h> 
 
 
@@ -288,15 +289,25 @@ weights::GetGamma(std::array<std::array<float, 9>, 9> const& k,
      0      , 0      , 0      , 0      , 0      , 0      , k[6][8], k[7][7], k[8][6],  //i   j+2
      0      , 0      , 0      , 0      , 0      , 0      , 0      , k[7][8], k[8][7],  //i+1 j+2
      0      , 0      , 0      , 0      , 0      , 0      , 0      , 0      , k[8][8]}; //i+2 j+2
-    
- 
+//    std::cout<<std::fixed; 
+//    std::cout<<std::setprecision(6); 
+//    for (int i = 0; i < 25; i++){
+//	   for (int j = 0; j < 9; j++) std::cout << A[i*9 + j] << '\t'; 
+//	   std::cout<<std::endl; 
+//    }
     int m = 25, n = 9, nrhs = 1; 
     int lda = 9, ldb = 1, info; 
     float temp[25]; 
     for(int i = 0; i < 25; i++){
 	    temp[i] = kt[i];
     }
+//    std::cout<< "Kt = " << std::endl; 
+//    for(int i = 0; i < 25; i++) std::cout<< temp[i] << std::endl; 
+
     info = LAPACKE_sgels(LAPACK_ROW_MAJOR, 'N', m, n, nrhs, A.data(), lda, temp, ldb);
+//    std::cout << "Gam = " << std::endl; 
+//    for(int i = 0; i < 9; i++) std::cout<< temp[i] << std::endl; 
+//    std::cin.get(); 
     for(int i = 0; i < 9; ++i) ga[i] = temp[i];
 }
  
@@ -304,7 +315,8 @@ weights::GetGamma(std::array<std::array<float, 9>, 9> const& k,
 void 
 weights::GetEigen()
 {
-    std::array<float, 81>  A;
+	//Need to use double precision for E-vecs to get correct order. 
+    std::array<double, 81>  A;
     std::array<std::array< float, 2>, 9> pnt = 
                            {{{-1, -1}, {0, -1}, {1, -1},  
                              {-1,  0}, {0,  0}, {1,  0}, 
@@ -312,28 +324,16 @@ weights::GetEigen()
 
     for (int j = 0; j < 9; ++j){
         for(int i = 0; i < 9; ++i){
-             A[i + j*9] = matern3(pnt[i], pnt[j], sig, dx); //this is K_sig
+             A[j*9 + i] = double(matern3(pnt[j], pnt[i], sig, dx)); //this is K_sig
         }
     }
-	
-/*    auto a = A.data(); 
-    for(int j = 0; j < 9; ++j){
-	    for(int i = 0; i < 9; ++i) std::cout<< a[i + j*9] << '\t'; 
-	    std::cout<<std::endl; 
-    }
-    std::cin.get(); */
     int N = 9, lda = 9, info, lwork;
-    LAPACKE_ssyev(LAPACK_ROW_MAJOR, 'V', 'U', N, A.data(), lda, lam.data()); 
+    double temp[9] = {}; 
+    LAPACKE_dsyevd(LAPACK_ROW_MAJOR, 'V', 'L', N, A.data(), lda, temp); 
     for (int j = 0; j < 9; ++j){
-        for(int i = 0; i < 9; ++i) V[i][j] =  A[i + j*9];
+	lam[j] = float(temp[j]); 
+        for(int i = 0; i < 9; ++i){
+	       	V[j][i] =  float(A[j*9 + i]);
+	}
     }
-/*    std::cout<<"EigenVectors"<<std::endl;
-    for(int j = 0; j < 9; ++j){
-	    for(int i = 0; i < 9; ++i) std::cout<< A[i + j*9] << '\t'; 
-	    std::cout<<std::endl; 
-    }
-    std::cin.get(); 
-    std::cout<<"EigenValues"<<std::endl;
-    for(int i = 0; i < 9; i++) std::cout<<lam[i] << std::endl; 
-    std::cin.get(); */
 }

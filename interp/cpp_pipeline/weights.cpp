@@ -10,8 +10,8 @@ weights::weights (const int Ratio[], const float del[])
 {
     dx[0] = del[0], dx[1] = del[1]; 
     r[0] = Ratio[0], r[1] = Ratio[1];
-    l = 12.*std::min(dx[0], dx[1]);
-    sig = 3.*std::min(dx[0], dx[1]);
+    l = 0.01; // 12.*std::min(dx[0], dx[1]);
+    sig = std::min(dx[0], dx[1]);
     std::array<std::array<float, 9>, 9> K = {}; //The same for every ratio;  
     std::array<std::array<float, 25>, 25> Ktot = {}; // The same for every ratio; 
     std::vector<std::array<float, 25> > kt(r[0]*r[1], std::array<float, 25>{{0}});

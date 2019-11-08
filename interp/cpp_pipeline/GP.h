@@ -44,6 +44,7 @@ public:
 		}
 		return result; 
 	}	
+
 	inline
 	std::array<float, 9> load(const std::vector<float> img_in, 
 		       		  const int j, const int i)
@@ -55,7 +56,7 @@ public:
 		int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
 		int id0 =  bot*insize[0]; 
 		int id1 =  j*insize[0]; 
-	        int id2 =  top*insize[0];
+        int id2 =  top*insize[0];
 		result[0] = img_in[id0 + left];
 		result[1] = img_in[id1 + left];
 		result[2] = img_in[id2 + left];
@@ -79,7 +80,7 @@ public:
 		int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
 		int id0 = (k*insize[1] + bot)*insize[0]; 
 		int id1 = (k*insize[1] + j)*insize[0]; 
-	        int id2 = (k*insize[1] + top)*insize[0];
+        int id2 = (k*insize[1] + top)*insize[0];
 		result[0] = img_in[id0 + left];
 		result[1] = img_in[id1 + left];
 		result[2] = img_in[id2 + left];
@@ -93,10 +94,10 @@ public:
 	} 
 	inline
 	std::array<float, 9> get_beta(std::array<float, 9> lbot, std::array<float, 9> bot,
-				      std::array<float, 9> rbot, std::array<float, 9> left, 
-			      	      std::array<float, 9> cen,  std::array<float, 9> right,
-				      std::array<float, 9> ltop, std::array<float, 9> top, 
-				      std::array<float, 9> rtop)
+                                  std::array<float, 9> rbot, std::array<float, 9> left, 
+                          	      std::array<float, 9> cen,  std::array<float, 9> right,
+                                  std::array<float, 9> ltop, std::array<float, 9> top, 
+                                  std::array<float, 9> rtop)
 	{
 		// beta = f^T K^(-1) f = sum 1/lam *(V^T*f)^2 
 		std::array<float, 9> beta = {}; 
@@ -133,6 +134,19 @@ public:
 		return beta; 
 	}
 
+    inline float getalpha(const std::array<float, 9> cen){
+        float alpha = 0.f;
+        float avg = 0.f; 
+		for(int i =0; i < 9; i++){
+			float prod = GP::dot(vectors[i], cen);
+            avg += cen[i]; 
+			alpha += (1.f/eigen[i])*(prod*prod); 
+		}
+        avg /= 9; 
+        alpha = alpha/(avg*avg); 
+		return alpha; 
+
+    }
 	inline
 	std::array<float, 9> getMSweights(const std::array<float, 9> &beta, const int ksid){
 		std::array<float, 9> w8ts; 
@@ -164,9 +178,11 @@ public:
 		float summ = 0; 
 		for(int i = 0; i < 9; i++){
 			summ += wsm[i]*gp[i];
+//            summ += 1./9.*gp[i]; 
 		}
 		return summ; 
 	}
+
 	void gray_interp(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 
 

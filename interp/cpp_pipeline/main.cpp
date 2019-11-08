@@ -14,14 +14,11 @@ int main(int argc, char* argv[]){
 	const int ratio[2] = {4, 4}; 
 	weights wgts(ratio, del);
 	const int size[3] = {img.cols, img.rows, img.channels()};
-        std::cout<< "Make Interp obj" << std::endl; 	
 	GP interp(wgts, size); 
 	cv::Mat flat = img.reshape(1, img.total()*img.channels());
 	std::vector<float> imgin = img.isContinuous()? flat : flat.clone();
-	std::cout<<img.total()<<std::endl;
 	std::vector<float> imgout(size[0]*ratio[0]*size[1]*ratio[1]*size[2], 0);
-	std::cout << " Interpolate " << std::endl; 
-	interp.MSinterp(imgin, imgout, ratio[0], ratio[1]); 
+	interp.gray_interp(imgin, imgout, ratio[0], ratio[1]); 
 	std::cout << "Superresolution completed" << std::endl; 
 	cv::Mat img2 = cv::Mat(imgout).reshape(size[2], size[1]*ratio[1]);
 	img2 *= 255; 

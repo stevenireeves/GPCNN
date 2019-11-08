@@ -44,7 +44,30 @@ public:
 		}
 		return result; 
 	}	
-	
+	inline
+	std::array<float, 9> load(const std::vector<float> img_in, 
+		       		  const int j, const int i)
+	{
+		std::array<float, 9> result;
+		int bot = (j-1 < 0) ? 0 : j-1;
+		int left = (i-1 < 0) ? 0 : i-1; 
+		int top = (j+1 >= insize[1]) ? insize[1]-1 : j+1; 
+		int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
+		int id0 =  bot*insize[0]; 
+		int id1 =  j*insize[0]; 
+	        int id2 =  top*insize[0];
+		result[0] = img_in[id0 + left];
+		result[1] = img_in[id1 + left];
+		result[2] = img_in[id2 + left];
+		result[3] = img_in[id0 + i]; 
+		result[4] = img_in[id1 + i];
+		result[5] = img_in[id2 + i]; 
+		result[6] = img_in[id0 + right];
+		result[7] = img_in[id1 + right]; 
+		result[8] = img_in[id2 + right]; 
+		return result; 	
+	} 
+
 	inline
 	std::array<float, 9> load(const std::vector<float> img_in, 
 		       		  const int k, const int j, const int i)
@@ -58,13 +81,13 @@ public:
 		int id1 = (k*insize[1] + j)*insize[0]; 
 	        int id2 = (k*insize[1] + top)*insize[0];
 		result[0] = img_in[id0 + left];
-		result[3] = img_in[id0 + i]; 
-		result[6] = img_in[id0 + right];
 		result[1] = img_in[id1 + left];
-		result[4] = img_in[id1 + i];
-		result[7] = img_in[id1 + right]; 
 		result[2] = img_in[id2 + left];
+		result[3] = img_in[id0 + i]; 
+		result[4] = img_in[id1 + i];
 		result[5] = img_in[id2 + i]; 
+		result[6] = img_in[id0 + right];
+		result[7] = img_in[id1 + right]; 
 		result[8] = img_in[id2 + right]; 
 		return result; 	
 	} 
@@ -144,6 +167,8 @@ public:
 		}
 		return summ; 
 	}
+	void gray_interp(const std::vector<float> img_in, 
+		      std::vector<float> &img_out, const int ry, const int rx); 
 
 	void MSinterp(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 

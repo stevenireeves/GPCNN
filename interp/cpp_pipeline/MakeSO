@@ -1,0 +1,8 @@
+platform =$(shell uname -s)
+ifeq ($(platform),Darwin)
+defrule:
+	echo I am running in MacOS
+else ifeq ($(platform),Linux)
+defrule:
+	echo I am running Linux
+endif

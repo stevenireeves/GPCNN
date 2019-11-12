@@ -21,7 +21,7 @@ void GP::gray_interp(const std::vector<float> img_in,
 		std::array<float, 9> righttop = {};
 		for(int i = 1; i < insize[0]-1; i++){
    	    	cen = GP::load(img_in, j, i);
-            float alpha = GP::getalpha(cen); 
+            float alpha = GP::getalpha(cen, beta[4]); 
             if(alpha > 100){ 
                 leftbot = GP::load(img_in, j-1, i-1);
                 bot = GP::load(img_in, j, i-1);
@@ -31,9 +31,9 @@ void GP::gray_interp(const std::vector<float> img_in,
                 lefttop = GP::load(img_in, j-1, i+1);
                 top = GP::load(img_in, j, i+1);
                 righttop = GP::load(img_in, j+1, i+1);
-                beta = GP::get_beta(leftbot, bot, rightbot, 
-                            left   , cen, right   ,
-                            lefttop, top, righttop);
+                GP::get_beta(leftbot, bot, rightbot, 
+                             left   , cen, right   ,
+                             lefttop, top, righttop, beta, true);
 
                 for(int idy = 0; idy < ry; idy++){
                     int jj = j*ry + idy;
@@ -152,9 +152,9 @@ void GP::MSinterp(const std::vector<float> img_in,
 				lefttop = GP::load(img_in, k, j-1, i+1);
 				top = GP::load(img_in, k, j, i+1);
 				righttop = GP::load(img_in, k, j+1, i+1);
-				beta = GP::get_beta(leftbot, bot, rightbot, 
-					            left   , cen, right   ,
-					  	    lefttop, top, righttop);
+				GP::get_beta(leftbot, bot, rightbot, 
+				             left   , cen, right   ,
+				  	     lefttop, top, righttop, beta, false);
 
 				for(int idy = 0; idy < ry; idy++){
 					int jj = j*ry + idy;

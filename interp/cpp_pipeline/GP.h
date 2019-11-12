@@ -91,73 +91,73 @@ public:
 		result[7] = img_in[id1 + right]; 
 		result[8] = img_in[id2 + right]; 
 		return result; 	
-	} 
+	}
+
 	inline
-	std::array<float, 9> get_beta(std::array<float, 9> lbot, std::array<float, 9> bot,
-                                  std::array<float, 9> rbot, std::array<float, 9> left, 
-                          	      std::array<float, 9> cen,  std::array<float, 9> right,
-                                  std::array<float, 9> ltop, std::array<float, 9> top, 
-                                  std::array<float, 9> rtop)
+	void get_beta(std::array<float, 9> lbot, std::array<float, 9> bot,
+                      std::array<float, 9> rbot, std::array<float, 9> left, 
+                      std::array<float, 9> cen,  std::array<float, 9> right,
+                      std::array<float, 9> ltop, std::array<float, 9> top, 
+                      std::array<float, 9> rtop,  std::array<float, 9> &beta,
+		      bool FLAG=false)
 	{
 		// beta = f^T K^(-1) f = sum 1/lam *(V^T*f)^2 
-		std::array<float, 9> beta = {}; 
 		std::array<float, 9> vs = {}; 
+		if(!FLAG){
+		    beta[4] = 0.f; 
+                    for(int i =0; i < 9; ++i){
+			vs = vectors[i]; 
+			float prod = GP::dot(vs, cen); 
+			beta[4] += (1.f*eigen[i])*(prod*prod); 
+		    }
+		}
+		for(int i =0; i < 9; ++i) if(i!=4) beta[i] = 0.f;
+	
 		for(int i =0; i < 9; i++){
 			vs = vectors[i];
 			float prod = GP::dot(vs, lbot);
 			beta[0] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, bot);
- 
 			beta[1] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, rbot);
-
 			beta[2] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, left);
-
 			beta[3] += (1.f/eigen[i])*(prod*prod); 
-			prod = GP::dot(vs, cen);
-
-			beta[4] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, right);
-
 			beta[5] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, ltop);
-
 			beta[6] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, top);
-
 			beta[7] += (1.f/eigen[i])*(prod*prod); 
 			prod = GP::dot(vs, rtop);
-
 			beta[8] += (1.f/eigen[i])*(prod*prod);
 		}
-		return beta; 
+		return; 
 	}
 
-    inline float getalpha(const std::array<float, 9> cen){
-        float alpha = 0.f;
+    inline float getalpha(const std::array<float, 9> cen, float &bet){
+        bet = 0.f;
         float avg = 0.f; 
-		for(int i =0; i < 9; i++){
-			float prod = GP::dot(vectors[i], cen);
+        for(int i =0; i < 9; i++){
+            float prod = GP::dot(vectors[i], cen);
             avg += cen[i]; 
-			alpha += (1.f/eigen[i])*(prod*prod); 
-		}
-        avg /= 9; 
-        alpha = alpha/(avg*avg); 
-		return alpha; 
-
-    }
-	inline
-	std::array<float, 9> getMSweights(const std::array<float, 9> &beta, const int ksid){
-		std::array<float, 9> w8ts; 
-		float summ = 0; 
-		for (int i = 0; i < 9; i++){
-			w8ts[i] = gammas[ksid][i]/(beta[i] + 1e-36);
-			summ += w8ts[i]; 	
-		} 
-		for(int i = 0; i < 9; i++) w8ts[i] /= summ;
-		return w8ts; 
+            bet += (1.f/eigen[i])*(prod*prod); 
 	}
+        avg /= 9; 
+        return bet/(avg*avg); 
+    }
+
+    inline
+    std::array<float, 9> getMSweights(const std::array<float, 9> &beta, const int ksid){
+        std::array<float, 9> w8ts; 
+        float summ = 0; 
+        for (int i = 0; i < 9; i++){
+            w8ts[i] = gammas[ksid][i]/(beta[i] + 1e-36);
+            summ += w8ts[i]; 	
+        } 
+        for(int i = 0; i < 9; i++) w8ts[i] /= summ;
+        return w8ts; 
+    }
 
 	inline
 	float combine(std::array<float, 9> lbot, std::array<float, 9> bot, std::array<float, 9> rbot,

@@ -14,6 +14,9 @@ ifdef DEBUG
 else
 	DB = -O3
 endif
+ifdef PROFILE
+	DB += -lprofiler
+endif
 all: superres.ex
 
 superres.ex: main.cpp GP.o weights.o

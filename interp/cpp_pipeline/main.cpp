@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <chrono>
+
 #include <opencv2/opencv.hpp>
+
 #include "GP.h"
 #include "weights.h"
 
@@ -18,9 +21,12 @@ int main(int argc, char* argv[]){
 	cv::Mat flat = img.reshape(1, img.total()*img.channels());
 	std::vector<float> imgin = img.isContinuous()? flat : flat.clone();
 	std::vector<float> imgout(size[0]*ratio[0]*size[1]*ratio[1]*size[2], 0);
+        auto start = std::chrono::high_resolution_clock::now(); 
 	interp.gray_interp(imgin, imgout, ratio[0], ratio[1]); 
+	auto stop = std::chrono::high_resolution_clock::now(); 
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start); 
+	std::cout<< " Interp profile = " << duration.count() << " ms" << std::endl; 
 //    interp.MSinterp(imgin, imgout, ratio[0], ratio[1]); 
-	std::cout << "Superresolution completed" << std::endl; 
 	cv::Mat img2 = cv::Mat(imgout).reshape(size[2], size[1]*ratio[1]);
 //	img2 *= 255; 
 //	cv::Mat img2 = cv::Mat(size[0]*ratio[0], size[1]*ratio[1], chan, imgout.data()); 

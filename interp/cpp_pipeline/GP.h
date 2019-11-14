@@ -38,10 +38,9 @@ public:
 	/* Member functions */ 
 	inline
 	float dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
-		float result = 0.f; 
-		for( int i = 0; i < 9; i++){
-		       	result += vec1[i]*vec2[i];
-		}
+		float result = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2] 
+		             + vec1[3]*vec2[3] + vec1[4]*vec2[4] + vec1[5]*vec2[5]
+		     	     + vec1[6]*vec2[6] + vec1[7]*vec2[7] + vec1[8]*vec2[8]; 	     
 		return result; 
 	}	
 
@@ -178,12 +177,13 @@ public:
 		float summ = 0; 
 		for(int i = 0; i < 9; i++){
 			summ += wsm[i]*gp[i];
-//            summ += 1./9.*gp[i]; 
 		}
 		return summ; 
 	}
 
 	void gray_interp(const std::vector<float> img_in, 
+		      std::vector<float> &img_out, const int ry, const int rx); 
+	void gray_interp_base(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 
 
 	void MSinterp(const std::vector<float> img_in, 

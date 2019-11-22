@@ -19,6 +19,7 @@ img_out = np.zeros(size[0]*size[1]*upsamp[0]*upsamp[1], dtype=np.float32)
 start = time.time()
 interpolate(img, img_out, upsamp, np.array([size[1], size[0]], dtype=np.int32))
 stop = time.time()
+print(stop - start)
 img_out = img_out*255
 img_out = img_out.reshape((size[0]*upsamp[0], size[1]*upsamp[1]))
 #img_out = img_out.astype(np.uint8)

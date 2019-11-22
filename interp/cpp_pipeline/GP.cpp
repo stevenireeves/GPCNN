@@ -3,6 +3,7 @@
 #include "GP.h" 
 
 
+
 void GP::gray_interp_base(const std::vector<float> img_in,
 			  std::vector<float> &img_out, const int ry, const int rx)
 {

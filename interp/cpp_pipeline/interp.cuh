@@ -3,60 +3,64 @@
 #include "img.cuh"
 
 __global__
-void gray_interp_cu(const img img_in, img img_out[], const int ry, const int rx)
+void gray_interp_cu(const img img_in, img img_out, const int ry, const int rx)
 {
     const int i = threadIdx.x + blockIdx.x*blockDim.x;
-    const int j = threadIdx.y + blockIdx.y*blockDim.y; 
-    float beta[9];
-    float cen[9];
-    GP::load(img_in,cen, j, i);
-    float alpha = GP::getalpha(cen, beta[4]);
-    if(alpha > 50){ 
-	float lbot[9]; 
-	float bot[9];
-	float rbot[9]; 
-	float left[9];
-	float right[9];
-	float ltop[9];
-	float top[9]; 
-	float rtop[9];
-	GP::load(img_in, lbot, j-1, i-1);
-	GP::load(img_in, bot, j, i-1);
-	GP::load(img_in, rbot, j+1,i-1);
-	GP::load(img_in, left, j-1, i);
-	GP::load(img_in, right, j+1, i);
-	GP::load(img_in, ltop, j-1, i+1);
-	GP::load(img_in, top, j, i+1);
-	GP::load(img_in, rtop, j+1, i+1);
-	GP::get_beta(lbot, bot, rbot , 
-		     left, cen, right,
-		     ltop, top, rtop , beta, true);
+    const int j = threadIdx.y + blockIdx.y*blockDim.y;
+    if(i < img.width){
+	    if(j < img.height){
+		    float beta[9];
+		    float cen[9];
+		    GP::load(img_in,cen, j, i);
+		    float alpha = GP::getalpha(cen, beta[4]);
+		    if(alpha > 50){ 
+			float lbot[9]; 
+			float bot[9];
+			float rbot[9]; 
+			float left[9];
+			float right[9];
+			float ltop[9];
+			float top[9]; 
+			float rtop[9];
+			GP::load(img_in, lbot , j-1, i-1);
+			GP::load(img_in, bot  , j  , i-1);
+			GP::load(img_in, rbot , j+1, i-1);
+			GP::load(img_in, left , j-1, i  );
+			GP::load(img_in, right, j+1, i  );
+			GP::load(img_in, ltop , j-1, i+1);
+			GP::load(img_in, top  , j  , i+1);
+			GP::load(img_in, rtop , j+1, i+1);
+			GP::get_beta(lbot, bot, rbot , 
+				     left, cen, right,
+				     ltop, top, rtop , beta, true);
 
-	for(int idy = 0; idy < ry; idy++){
-	    int jj = j*ry + idy;
-	    int ind =jj*outsize[1];	
-	    for(int idx = 0; idx < rx; idx++){
-		int ii = i*rx + idx; 
-		int idk = idx*ry + idy;
-		auto msweights = GP::getMSweights(beta, idk);
-		img_out[ind + ii] = GP::combine(lbot, bot, rbot ,
-						left   , cen, right,
-						ltop, top, rtop , 
-						weight[idk], msweights );
-	    }
+			for(int idy = 0; idy < ry; idy++){
+			    int jj = j*ry + idy;
+			    int ind =jj*outsize[1];	
+			    for(int idx = 0; idx < rx; idx++){
+				int ii = i*rx + idx; 
+				int idk = idx*ry + idy;
+				auto msweights = GP::getMSweights(beta, idk);
+				img_out[ind + ii] = GP::combine(lbot, bot, rbot ,
+								left, cen, right,
+								ltop, top, rtop , 
+								weight[idk], msweights);
+			    }
+			}
+		    }
+		    else{
+			for(int idy = 0; idy < ry; idy++){
+			    int jj = j*ry + idy;
+			    int ind =jj*outsize[1];	
+			    for(int idx = 0; idx < rx; idx++){
+				int ii = i*rx + idx; 
+				int idk = idx*ry + idy;
+				img_out[ind + ii] = GP::dot(weight[idk][4], cen); 
+			    }
+			}
+		    }
+		}
 	}
-    }
-    else{
-	for(int idy = 0; idy < ry; idy++){
-	    int jj = j*ry + idy;
-	    int ind =jj*outsize[1];	
-	    for(int idx = 0; idx < rx; idx++){
-		int ii = i*rx + idx; 
-		int idk = idx*ry + idy;
-		img_out[ind + ii] = GP::dot(weight[idk][4], cen); 
-	    }
-	}
-    }
 }
 
 

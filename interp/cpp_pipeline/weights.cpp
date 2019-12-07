@@ -106,26 +106,26 @@ weights::GetK(std::array<std::array<float, 9>, 9> &K, std::array<std::array<floa
 void
 weights::Decomp(std::array<std::array<float, 9>, 9> &K, std::array<std::array<float, 25>, 25>  &Kt)
 {
-    std::array<float, 81> kt = {}; 
+    std::array<double, 81> kt = {}; 
     for(int i = 0; i < 9; i++) 
         for(int j = i; j < 9; j++) 
-            kt[i*9+j] = K[j][i]; 
+            kt[i*9+j] = double(K[j][i]); 
 
-    int info = LAPACKE_spotrf(LAPACK_ROW_MAJOR, 'U', 9, kt.data(), 9);
+    int info = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'U', 9, kt.data(), 9);
      for(int i = 0; i < 9; i++)
         for(int j = i; j < 9; j++){
-            K[i][j] = kt[i*9+j];
+            K[i][j] = float(kt[i*9+j]);
             K[j][i] = K[i][j]; 
         } 
 
-    std::vector<float> temp(625, 0); 
+    std::vector<double> temp(625, 0); 
     for(int i = 0; i < 25; i++)
         for(int j = 0; j < 25; j++)
-            temp[j+i*25] = Kt[j][i]; 
-    info = LAPACKE_spotrf(LAPACK_ROW_MAJOR, 'U', 25, temp.data(), 25); 
+            temp[j+i*25] = double(Kt[j][i]); 
+    info = LAPACKE_dpotrf(LAPACK_ROW_MAJOR, 'U', 25, temp.data(), 25); 
      for(int i = 0; i < 25; i++)
         for(int j = i; j < 25; j++){
-            Kt[i][j] = temp[i*25+j];
+            Kt[i][j] = float(temp[i*25+j]);
             Kt[j][i] = Kt[i][j]; 
         } 
 }

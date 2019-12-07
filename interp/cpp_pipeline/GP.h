@@ -4,8 +4,7 @@
 #include <vector>
 #include <cmath> 
 #include "weights.h"
-
-
+ 
 class GP
 {
 public:
@@ -19,7 +18,7 @@ public:
 
 	/* Constructor */ 
 	GP(std::vector<std::array<std::array<float, 9>, 9> > wts, std::vector<std::array<float, 9> > gam, 
-		   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig, const int size[3]){
+	   std::array<std::array<float, 9>, 9> vec, std::array<float, 9> eig, const int size[3]){
 		weight = wts;
 		gammas = gam;
 		vectors = vec; 
@@ -28,8 +27,8 @@ public:
 	}
 
 	GP(const weights wgts, const int size[3]){
-		weight = wgts.ks; 
-		gammas = wgts.gam; 
+		weight = wgts.ks;
+    	gammas = wgts.gam; 
 		vectors = wgts.V;
 		eigen = wgts.lam;
 		insize[0] = size[0], insize[1] = size[1], insize[2] = size[2]; 
@@ -37,16 +36,38 @@ public:
 
 	/* Member functions */ 
 	inline
-	float dot(const std::array<float, 9> vec1, const std::array<float, 9> vec2){
-		float result = vec1[0]*vec2[0] + vec1[1]*vec2[1] + vec1[2]*vec2[2] 
-		             + vec1[3]*vec2[3] + vec1[4]*vec2[4] + vec1[5]*vec2[5]
-		     	     + vec1[6]*vec2[6] + vec1[7]*vec2[7] + vec1[8]*vec2[8]; 	     
+	float dot(const std::array<float, 9> &vec1, const std::array<float, 9> &vec2){
+        float result = 0; 
+        #pragma unroll
+        for(int i = 0; i< 9; i++) result += vec1[i]*vec2[i]; 
 		return result; 
 	}	
 
 	inline
-	std::array<float, 9> load(const std::vector<float> img_in, 
-		       		  const int j, const int i)
+	std::array<float, 9> load(const std::vector<float> &img_in, 
+		       	        	  const int j, const int i)
+	{
+		std::array<float, 9> result;
+        int left = (i-1);
+        int right = (i+1);
+		int id0 =  (j-1)*insize[0]; 
+		int id1 =  j*insize[0]; 
+        int id2 =  (j+1)*insize[0];
+		result[0] = img_in[id0 + left];
+		result[1] = img_in[id1 + left];
+		result[2] = img_in[id2 + left];
+		result[3] = img_in[id0 + i]; 
+		result[4] = img_in[id1 + i];
+		result[5] = img_in[id2 + i]; 
+		result[6] = img_in[id0 + right];
+		result[7] = img_in[id1 + right]; 
+		result[8] = img_in[id2 + right]; 
+		return result; 	
+	}
+ 
+	inline
+	std::array<float, 9> load_borders(const std::vector<float> &img_in, 
+                		       		  const int j, const int i)
 	{
 		std::array<float, 9> result;
 		int bot = (j-1 < 0) ? 0 : j-1;
@@ -69,7 +90,7 @@ public:
 	} 
 
 	inline
-	std::array<float, 9> load(const std::vector<float> img_in, 
+	std::array<float, 9> load(const std::vector<float> &img_in, 
 		       		  const int k, const int j, const int i)
 	{
 		std::array<float, 9> result;
@@ -88,62 +109,69 @@ public:
 		result[5] = img_in[id2 + i]; 
 		result[6] = img_in[id0 + right];
 		result[7] = img_in[id1 + right]; 
-		result[8] = img_in[id2 + right]; 
+		result[8] = img_in[id2 + right];
 		return result; 	
 	}
 
 	inline
-	void get_beta(std::array<float, 9> lbot, std::array<float, 9> bot,
-                      std::array<float, 9> rbot, std::array<float, 9> left, 
-                      std::array<float, 9> cen,  std::array<float, 9> right,
-                      std::array<float, 9> ltop, std::array<float, 9> top, 
-                      std::array<float, 9> rtop,  std::array<float, 9> &beta,
-		      bool FLAG=false)
+	void get_beta(const std::array<float, 9> &lbot, const std::array<float, 9> &bot,
+                  const std::array<float, 9> &rbot, const std::array<float, 9> &left, 
+                  const std::array<float, 9> &cen,  const std::array<float, 9> &right,
+                  const std::array<float, 9> &ltop, const std::array<float, 9> &top, 
+                  const std::array<float, 9> &rtop, std::array<float, 9> &beta)
 	{
 		// beta = f^T K^(-1) f = sum 1/lam *(V^T*f)^2 
 		std::array<float, 9> vs = {}; 
-		if(!FLAG){
+/*    	if(!FLAG){
 		    beta[4] = 0.f; 
                     for(int i =0; i < 9; ++i){
 			vs = vectors[i]; 
 			float prod = GP::dot(vs, cen); 
 			beta[4] += (1.f*eigen[i])*(prod*prod); 
 		    }
-		}
-		for(int i =0; i < 9; ++i) if(i!=4) beta[i] = 0.f;
-	
-		for(int i =0; i < 9; i++){
+		} */ 
+        for(int i =0; i < 9; ++i) beta[i] = 0.f; 
+		for(int i =0; i < 9; ++i){
 			vs = vectors[i];
 			float prod = GP::dot(vs, lbot);
 			beta[0] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, bot);
-			beta[1] += (1.f/eigen[i])*(prod*prod); 
+			beta[1] += (1.f/eigen[i])*(prod*prod);
+ 
 			prod = GP::dot(vs, rbot);
 			beta[2] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, left);
 			beta[3] += (1.f/eigen[i])*(prod*prod); 
+
+			prod = GP::dot(vs, cen);
+			beta[4] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, right);
 			beta[5] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, ltop);
 			beta[6] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, top);
 			beta[7] += (1.f/eigen[i])*(prod*prod); 
+
 			prod = GP::dot(vs, rtop);
 			beta[8] += (1.f/eigen[i])*(prod*prod);
 		}
-		return; 
 	}
 
-    inline float getalpha(const std::array<float, 9> cen, float &bet){
-        bet = 0.f;
+    inline float getalpha(const std::array<float, 9> &cen){
+        float bets = 0.f;
         float avg = 0.f; 
         for(int i =0; i < 9; i++){
             float prod = GP::dot(vectors[i], cen);
-            avg += cen[i]; 
-            bet += (1.f/eigen[i])*(prod*prod); 
-	}
+            avg += cen[i];
+            bets += (1.f/eigen[i])*(prod*prod); 
+        }
         avg /= 9; 
-        return bet/(avg*avg); 
+       return bets/(avg*avg); 
     }
 
     inline
@@ -159,10 +187,10 @@ public:
     }
 
 	inline
-	float combine(std::array<float, 9> lbot, std::array<float, 9> bot, std::array<float, 9> rbot,
-		      std::array<float, 9> left, std::array<float, 9> cen, std::array<float, 9> right, 
-		      std::array<float, 9> ltop, std::array<float, 9> top, std::array<float, 9> rtop, 
-		      std::array< std::array<float, 9>, 9> wts, std::array<float, 9> wsm)
+	float combine(const std::array<float, 9> &lbot, const std::array<float, 9> &bot, const std::array<float, 9> &rbot,
+		          const std::array<float, 9> &left, const std::array<float, 9> &cen, const std::array<float, 9> &right, 
+		          const std::array<float, 9> &ltop, const std::array<float, 9> &top, const std::array<float, 9> &rtop, 
+		          const std::array< std::array<float, 9>, 9> &wts, const std::array<float, 9> &wsm)
 	{
 		std::array<float, 9> gp; 
 		gp[0] = GP::dot(wts[0], lbot); 

@@ -2,9 +2,7 @@
 #include <omp.h>
 #include "GP.h" 
 
-
-
-void GP::gray_interp_base(const std::vector<float> img_in,
+void GP::single_channel_interp_base(const std::vector<float> img_in,
 			  std::vector<float> &img_out, const int ry, const int rx)
 {
 	const int outsize[2] = {insize[1]*ry, insize[0]*rx}; 
@@ -86,7 +84,7 @@ void GP::gray_interp_base(const std::vector<float> img_in,
 }
 
 /* GP Interpolation with Single Gray Channel */ 
-void GP::gray_interp(const std::vector<float> img_in, 
+void GP::single_channel_interp(const std::vector<float> img_in, 
                      std::vector<float> &img_out, const int ry, const int rx){
 	const int outsize[2] = {insize[1]*ry, insize[0]*rx}; 
 	/*------------------- Body -------------------------- */

@@ -209,11 +209,11 @@ public:
 		return summ; 
 	}
 
-	void gray_interp(const std::vector<float> img_in, 
+	void single_channel_interp(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 
-	void gray_interp_base(const std::vector<float> img_in, 
+	void single_channel_interp_base(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 
-
+    
 	void MSinterp(const std::vector<float> img_in, 
 		      std::vector<float> &img_out, const int ry, const int rx); 
 };

@@ -9,7 +9,7 @@ void driver(float *img_in, float *img_out, const int upsample_ratio[], const int
     const int size[3] = {in_size[0], in_size[1], 1}; 
     GP interp(wgts, size); 
     std::vector<float> img2(size[0]*upsample_ratio[0]*upsample_ratio[1]*size[1], 0.f);
-    interp.gray_interp(img1, img2, upsample_ratio[0], upsample_ratio[1]);
+    interp.single_channel_interp(img1, img2, upsample_ratio[0], upsample_ratio[1]);
     std::copy(img2.begin(), img2.end(), img_out); 
 }
 

@@ -184,14 +184,15 @@ void GP::single_channel_interp(const std::vector<float> img_in,
                 int jj = idy + j*ry; 
                 int ind =jj*outsize[1];
                 for(int idx = 0; idx < rx; idx++){
+                    int ii = idx + i*rx; 
                     int idk = idx*ry + idy;
-                    img_out[ind + idx] = GP::dot(weight[idk][4], cen); 
+                    img_out[ind + ii] = GP::dot(weight[idk][4], cen); 
                 }
             }
         }
     }
 	//=============== right ======================
-	for(int i = (insize[0]-1); i < insize[0]; i++){ 
+	for(int i = (insize[0]-2); i < insize[0]; i++){ 
 #pragma omp parallel for
         for(int j = 0; j < insize[1]; j++){
             auto cen = GP::load_borders(img_in, j, i); 

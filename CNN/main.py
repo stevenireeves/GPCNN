@@ -41,7 +41,7 @@ def train(epoch):
         loss.backward()
         optimizer.step()
       print("===> Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, idy, len(direc), loss.item()))
-    print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch, epoch_loss /(len(direc)*m*batch_size)))
+    print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch, epoch_loss /(len(direc)*m)))
 
 
 def test():
@@ -59,7 +59,7 @@ def test():
             mse = criterion(prediction, test_y)
             psnr = 10 * log10(1 / mse.item())
             avg_psnr += psnr
-    print("===> Avg. PSNR: {:.4f} dB".format(avg_psnr /(len(direc)*m*batch_size)))
+    print("===> Avg. PSNR: {:.4f} dB".format(avg_psnr /(len(direc)*m)))
 
 
 def checkpoint(epoch):

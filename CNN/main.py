@@ -17,9 +17,10 @@ VALID_PATH_GP = '/home/steven/dissertation/GP_image/data/GP/GP4_valid/'
 VALID_PATH_GT = '/home/steven/dissertation/GP_image/data/valid_HR/'
 print('===> Building model')
 model = Net().to(device)
+model._initialize_weights()
 criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.0001)
-batch_size = 128
+optimizer = optim.Adam(model.parameters(), lr=0.01)
+batch_size = 256
 
 
 def train(epoch):
@@ -32,7 +33,7 @@ def train(epoch):
       ids = random.sample(range(m), m)
       for i in range(m):
         idx = ids[i]
-        train_x, train_y = get_batch(patches_train, patches_gt, batch_size, idx)
+        train_x, train_y = get_batch(patches_train, patches_gt, batch_size, idx, m)
         train_x = train_x.to(device)
         train_y = train_y.to(device)
         optimizer.zero_grad()
@@ -40,7 +41,9 @@ def train(epoch):
         epoch_loss += loss.item()
         loss.backward()
         optimizer.step()
-      print("===> Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, idy, len(direc), loss.item()))
+      
+      if idy%100 == 0: 
+        print("===> Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, idy, len(direc), loss.item()))
     print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch, epoch_loss /(len(direc)*m)))
 
 
@@ -52,7 +55,7 @@ def test():
           patches_valid, patches_gt = get_valid_obj(VALID_PATH_GP, VALID_PATH_GT, fil)
           m = len(patches_valid)//batch_size
           for i in range(m):
-            test_x, test_y = get_batch(patches_valid, patches_gt, batch_size, i)
+            test_x, test_y = get_batch(patches_valid, patches_gt, batch_size, i, m)
             test_x = test_x.to(device)
             test_y = test_y.to(device)
             prediction = model(test_x)
@@ -67,7 +70,7 @@ def checkpoint(epoch):
     torch.save(model, model_out_path)
     print("Checkpoint saved to {}".format(model_out_path))
 
-for epoch in range(25):
+for epoch in range(50):
     train(epoch)
     test()
     checkpoint(epoch)

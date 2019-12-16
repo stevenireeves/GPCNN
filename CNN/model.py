@@ -19,7 +19,7 @@ class Net(nn.Module):
         self.conv3 = nn.Conv2d(in_channels=32,out_channels=8,kernel_size=2) 
         # Final 
         #8 * 58 * 58 = 26912
-        self.dense = nn.Linear(26912,12288)
+        self.dense = nn.Linear(26912,12288, bias=False)
         #out is (3, 64, 64)
         
         if(torch.cuda.is_available()):
@@ -36,7 +36,7 @@ class Net(nn.Module):
       return x
 
     def _initialize_weights(self):
-        init.orthogonal_(self.conv1.weight)
-        init.orthogonal_(self.conv2.weight)
-        init.orthogonal_(self.conv3.weight, init.calculate_gain('relu'))
-        init.orthogonal_(self.dense.weight, init.calculate_gain('relu'))
+        I.xavier_uniform_(self.conv1.weight)
+        I.xavier_uniform_(self.conv2.weight, I.calculate_gain('relu'))
+        I.xavier_uniform_(self.conv3.weight, I.calculate_gain('relu'))
+        I.xavier_uniform_(self.dense.weight)

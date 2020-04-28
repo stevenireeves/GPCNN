@@ -1,4 +1,7 @@
 This is an experimental github for Steven Reeves's PhD research for the University of California, Santa Cruz, utilizing 
 Gaussian Process Modeling and Convolutional Neural Networks for Single Image Super Resolution. 
 
-©Steven Reeves, 2019. 
+This model uses a Gaussian Process convolution upsampling algorthim paired to an deep CNN enhancement network based off of ResNET.
+
+
+©Steven Reeves, 2020. 

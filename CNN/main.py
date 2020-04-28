@@ -1,76 +1,121 @@
-from math import log10
 import os
 import random 
 
+import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from model import Net
-from data_loader import get_train_obj, get_batch, get_valid_obj
+from data_loader import get_train_objs, get_test_objs, get_batch, get_img, get_test_image
 
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-TRAIN_PATH_GP = '/home/steven/dissertation/GP_image/data/GP/GP4/'
-TRAIN_PATH_GT = '/home/steven/dissertation/GP_image/data/train_HR/'
-VALID_PATH_GP = '/home/steven/dissertation/GP_image/data/GP/GP4_valid/'
-VALID_PATH_GT = '/home/steven/dissertation/GP_image/data/valid_HR/'
+device = torch.device("cuda:0")# if torch.cuda.is_available() else "cpu")
+TRAIN_PATH_GP = '/home/steven/dissertation/GP_image/data/GP/train2/'
+TRAIN_PATH_GT = '/home/steven/dissertation/GP_image/data/train_HR/128x128/train_set/'
+VALID_PATH_GP = '/home/steven/dissertation/GP_image/data/GP/GP2_test/'
+VALID_PATH_GT = '/home/steven/dissertation/GP_image/data/test_HR/'
 print('===> Building model')
-model = Net().to(device)
-model._initialize_weights()
-criterion = nn.MSELoss()
-optimizer = optim.Adam(model.parameters(), lr=0.01)
-batch_size = 256
-
-
-def train(epoch):
+#model = Net() 
+#model._initialize_weights()
+model = torch.load('models2/model_epoch_40.pth')
+#if torch.cuda.device_count()>1:
+#  model = nn.DataParallel(model, device_ids=[0,1]).to(device)
+#else:
+#  model = model.to(device)
+criterion = nn.L1Loss()
+optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+#optimizer = optim.Adam(model.parameters(), lr=0.001) 
+scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
+batch_size = 128 #400
+training_loss = []
+validation_loss = []
+num = 10
+def train(epoch, train_obj, gt_obj, i):
+    model.train()
     epoch_loss = 0
-    direc = os.listdir(TRAIN_PATH_GP)
-    random.shuffle(direc)
-    for idy, fil in enumerate(direc):
-      patches_train, patches_gt = get_train_obj(TRAIN_PATH_GP, TRAIN_PATH_GT, fil)
-      m = len(patches_train)//batch_size
-      ids = random.sample(range(m), m)
-      for i in range(m):
-        idx = ids[i]
-        train_x, train_y = get_batch(patches_train, patches_gt, batch_size, idx, m)
-        train_x = train_x.to(device)
-        train_y = train_y.to(device)
-        optimizer.zero_grad()
-        loss = criterion(model(train_x), train_y)
-        epoch_loss += loss.item()
-        loss.backward()
-        optimizer.step()
-      
-      if idy%100 == 0: 
-        print("===> Epoch[{}]({}/{}): Loss: {:.4f}".format(epoch, idy, len(direc), loss.item()))
-    print("===> Epoch {} Complete: Avg. Loss: {:.4f}".format(epoch, epoch_loss /(len(direc)*m)))
+    m = len(train_obj)//batch_size
+#shuffle training set
+    batch_loss = 0
+    for idy in range(m):
+      train_x, train_y = get_batch(train_obj, gt_obj, batch_size, idy, True)
+      optimizer.zero_grad()
+      train_x = train_x.to(device)
+      train_y = train_y.to(device)
+      loss = criterion(model(train_x), train_y)
+      epoch_loss += loss.item()
+      batch_loss += loss.item()
+      loss.backward()
+      optimizer.step()
+      if(idy%100==0):
+        if(idy > 0):
+          batch_loss/=100 
+        print("===> Epoch[{}], round[{}]({}/{}): Batch Loss: {:.8f}".format(epoch, i, idy, m, batch_loss))
+        batch_loss = 0
+      if(idy==m-1):
+        batch_loss/=(m%100)
+        print("===> Epoch[{}], round[{}]({}/{}): Batch Loss: {:.8f}".format(epoch, i, idy, m, batch_loss))
+    print("===> Epoch {} Complete: Avg. Loss: {:.8f}".format(epoch, epoch_loss/(m)))
+    training_loss.append(epoch_loss/(m))
 
-
-def test():
-    avg_psnr = 0
-    direc = os.listdir(VALID_PATH_GP)
+def test(valid_gp, valid_gt):
+    avg = 0
+    print('------------------ Validation----------------------')
+    model.eval()
     with torch.no_grad():
-        for fil in direc:
-          patches_valid, patches_gt = get_valid_obj(VALID_PATH_GP, VALID_PATH_GT, fil)
-          m = len(patches_valid)//batch_size
-          for i in range(m):
-            test_x, test_y = get_batch(patches_valid, patches_gt, batch_size, i, m)
-            test_x = test_x.to(device)
-            test_y = test_y.to(device)
-            prediction = model(test_x)
-            mse = criterion(prediction, test_y)
-            psnr = 10 * log10(1 / mse.item())
-            avg_psnr += psnr
-    print("===> Avg. PSNR: {:.4f} dB".format(avg_psnr /(len(direc)*m)))
+      for j in range(len(valid_gt)):
+        test_x, shape = get_test_image(valid_gp[j])
+        test_x = torch.from_numpy(test_x).to(device)
+        for i in range(len(test_x)): 
+          prediction = model(test_x[i:i+1])
+          test_x[i] = test_x[i] + prediction
+        img = get_img(test_x.data.cpu().numpy(), shape, valid_gp[j].shape)
+        crit = psnr(valid_gt[j], img)
+        avg += crit
+#        print("PSNR ---> {:.8f}".format(crit))
+    avg /= len(valid_gt)
+    print("===> Avg. PSNR : {:.8f}".format(avg))
+    validation_loss.append(avg)
 
 
-def checkpoint(epoch):
-    model_out_path = "model_epoch_{}.pth".format(epoch)
-    torch.save(model, model_out_path)
-    print("Checkpoint saved to {}".format(model_out_path))
+def checkpoint(epoch, check):
+    if(epoch%check==0):
+      model_out_path = 'models2/'+"model_epoch_{}.pth".format(epoch)
+      torch.save(model, model_out_path)
+      print("Checkpoint saved to {}".format(model_out_path))
 
-for epoch in range(50):
-    train(epoch)
-    test()
-    checkpoint(epoch)
+print('Reading in Data Set')
+train_obj, gt_obj = get_train_objs(TRAIN_PATH_GP, TRAIN_PATH_GT)
+gp_imgs, gt_imgs = get_test_objs(VALID_PATH_GP, VALID_PATH_GT, num)
+print('Data Set Loaded')
+#means = np.zeros(train_obj[0].shape, dtype=np.float32) # train_obj.mean(axis=0).astype(np.float32) 
+for epoch in range(41, 50):
+    for i in range(2): 
+#train
+      indices = np.arange(len(train_obj))
+      np.random.shuffle(indices)
+      train_obj = train_obj[indices]
+      gt_obj = gt_obj[indices]
+      train(epoch, train_obj, gt_obj, i)
+#test
+    test(gp_imgs, gt_imgs)
+    checkpoint(epoch, 1)
+    if(epoch>1 and epoch%40==0):
+      scheduler.step()
+#checkpoint(epoch, 1)
+
+training_loss = np.asarray(training_loss)
+validation_loss = np.asarray(validation_loss)
+plt.subplot(2,1,1)
+plt.plot(np.arange(len(training_loss)), training_loss, 'k-')
+plt.xlabel('Epoch')
+plt.ylabel('Training Loss')
+plt.subplot(2,1,2)
+plt.plot(np.arange(len(validation_loss)), validation_loss, 'k-')
+plt.xlabel('Epoch')
+plt.ylabel('Validation Loss')
+plt.savefig('loss.png')
+plt.show()
+training_loss.flatten.save('training_loss.out')
+validation_loss.flatten.save('validation_loss.out')

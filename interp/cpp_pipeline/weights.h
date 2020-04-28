@@ -16,23 +16,10 @@ class weights
     int r[2]; 
     float dx[2];  
     //
-    // Eigen Values of Covariance Matrix
-    //
-    std::array<float, 9> lam = {}; 
-    //
-    //  Eigen Vectors of Covariance Matrix
-    //
-    std::array<std::array<float, 9>, 9> V = {};
-    //
     //  Weights to be applied for interpolation
     //
-    std::vector<std::array<std::array<float, 9>, 9> > ks; 
-    //
-    //  Gammas needed for optimal combination
-    //
-    std::vector<std::array<float, 9> > gam;
+    std::vector<std::array<float, 9> > ks; 
     float l;
-    float sig;  
 
 // Linear Algebra Functions
     template<int n>
@@ -53,32 +40,13 @@ class weights
     cholesky(std::array<float, n> &b, std::array<std::array<float, n>, n> K);
 
     void
-    Decomp(std::array<std::array<float, 9>, 9> &K, std::array<std::array<float, 25>, 25> &Kt); 
-
-    // Set up for the multi-sampled Weighted GP interpolation 
+    Decomp(std::array<std::array<float, 9>, 9> &K); 
+// GP functions 
     // Build K makes the Coviarance Kernel Matrices for each Samples 
-    // And for Total Stencil
-    void GetK(std::array<std::array<float, 9>, 9> &K, std::array<std::array<float, 25>, 25> &Ktot); 
+    void GetK(std::array<std::array<float, 9>, 9> &K); 
     //
-    // Get Weights builds k*Kinv for each stencil
+    // Get Weights builds k*Kinv 
     //
     void GetKs(const std::array<std::array<float, 9>, 9> K);
-    //
-    //  Get Weights for the LSQ RHS
-    //
-    void GetKtotks(const std::array<std::array<float, 25>, 25> K1, std::vector<std::array<float, 25> > &kt); 
-    //
-    // Get Gamma by solving a LSQ problem only need this once. 
-    //
-    void GetGamma(std::array<std::array<float, 9>, 9> const& k,
-                  std::array<float, 25> const &kt, std::array<float, 9> &ga); 
-    //
-    //  Get EigenVecs and EigenValues for smoothness indicators. 
-    //  Will use the Shifted QR algorithm with deflation 
-    //
-    void GetEigen();
 };
-
-
-
 #endif 

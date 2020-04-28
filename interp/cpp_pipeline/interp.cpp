@@ -27,9 +27,9 @@ void driver_color(float *bin, float *gin, float *rin,
     std::vector<float> b2(size[0]*upsample_ratio[0]*upsample_ratio[1]*size[1], 0.f);
     std::vector<float> r2(size[0]*upsample_ratio[0]*upsample_ratio[1]*size[1], 0.f);
     std::vector<float> g2(size[0]*upsample_ratio[0]*upsample_ratio[1]*size[1], 0.f);
-    interp.single_channel_interp_base(b1, b2, upsample_ratio[0], upsample_ratio[1]);
-    interp.single_channel_interp_base(g1, g2, upsample_ratio[0], upsample_ratio[1]);
-    interp.single_channel_interp_base(r1, r2, upsample_ratio[0], upsample_ratio[1]);
+    interp.single_channel_interp(b1, b2, upsample_ratio[0], upsample_ratio[1]);
+    interp.single_channel_interp(g1, g2, upsample_ratio[0], upsample_ratio[1]);
+    interp.single_channel_interp(r1, r2, upsample_ratio[0], upsample_ratio[1]);
     std::copy(b2.begin(), b2.end(), bout); 
     std::copy(g2.begin(), g2.end(), gout); 
     std::copy(r2.begin(), r2.end(), rout); 

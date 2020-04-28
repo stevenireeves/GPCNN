@@ -22,16 +22,16 @@ int main(int argc, char* argv[]){
 	const int size[3] = {img.cols, img.rows, img.channels()};
 	GP interp(wgts, size);
     for(int i = 0; i < size[2]; i++){ 
+        auto start = std::chrono::high_resolution_clock::now(); 
         cv::Mat flat = bgr_in[i].reshape(1, bgr_in[i].total());
         std::vector<float> imgin = bgr_in[i].isContinuous()? flat : flat.clone();
         std::vector<float> imgout(size[0]*ratio[0]*size[1]*ratio[1], 0);
-        auto start = std::chrono::high_resolution_clock::now(); 
         interp.single_channel_interp(imgin, imgout, ratio[0], ratio[1]); 
         auto stop = std::chrono::high_resolution_clock::now(); 
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start); 
-        std::cout<< " Interp profile = " << duration.count() << " ms" << std::endl; 
 	    bgr_out.push_back(cv::Mat(imgout).reshape(1, size[1]*ratio[1]));
         bgr_out[i].convertTo(bgr_out[i], CV_8U); 
+        std::cout<< " Interp profile = " << duration.count() << " ms" << std::endl; 
     }
 //    interp.MSinterp(imgin, imgout, ratio[0], ratio[1]); 
     cv::Mat img2;

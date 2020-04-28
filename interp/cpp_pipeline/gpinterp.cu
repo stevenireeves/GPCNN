@@ -1,38 +1,34 @@
 #include <cuda_runtime.h>
-#include "CImg.h"
-
+#include <GP.h> 
 using namespace std;
-using namespace cimg_library;
 
-__global__ void interp(unsigned char * d_src, unsigned char * d_dst, int width, int height)
+__global__ void interp(float *img_in, float * img_out, int width, int height)
 {
     int pos_x = blockIdx.x * blockDim.x + threadIdx.x;
     int pos_y = blockIdx.y * blockDim.y + threadIdx.y;
 
     if (pos_x >= width || pos_y >= height)
         return;
-	
-    uchar3 rgb;
-    rgb.x = d_src[pos_y * width + pos_x];
-    rgb.y = d_src[(height + pos_y ) * width + pos_x];
-    rgb.z = d_src[(height * 2 + pos_y) * width + pos_x];
-
-    unsigned int _gray = (unsigned int)(0.299f*rgb.x + 0.587f*rgb.y + 0.114*rgb.z);
-    unsigned char gray = _gray > 255 ? 255 : _gray;
-
-    d_dst[pos_y * width + pos_x] = gray;
+    auto cen = GP::load(img_in, j, i);
+    for(int idy = 0; idy < ry; idy++){
+        int jj = j*ry + idy;
+        int ind =jj*outsize[1];	
+        for(int idx = 0; idx < rx; idx++){
+	        int ii = i*rx + idx; 
+	        int idk = idx*ry + idy;
+	        img_out[ind + ii] = GP::dot(weight[idk], cen); 
+            }
+    }
 }
 
-__device__ float GP( float st[5], float weights[5], float ml[5])
+__device__ float GP( float st[9], float weights[9])
 {
 	float result = 0.0f; 
-	float mle = ml[0]*st[0]+ml[1]*st[1]+ml[2]*st[2]+ml[3]*st[3]+ml[4]*st[4];
-	result += mle;
-	for(int i = 0; i<5; ++i) result+= weights[i]*(st[i]-mle); 
+	for(int i = 0; i<9; ++i) result+= weights[i]*st[i]; 
 	return result; 
 }
 
-
+/*
 int main()
 {
     //load image
@@ -72,4 +68,4 @@ int main()
     CImg<unsigned char> out(h_gs,width,height);
 	out.save("GSSAGAN.bmp");
     return 0;
-}
+} */ 

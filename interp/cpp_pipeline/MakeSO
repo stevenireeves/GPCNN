@@ -28,7 +28,7 @@ else ifeq ($(platform),Linux)
 CPP = g++
 interp.so: interp.cpp GP.o weights.o
 	$(CPP) -fPIC -shared -o interp.so interp.cpp GP.o weights.o $(CFLAGS) $(OMPFLAGS) 
-weights.o: se_weights.cpp weights.h
+weights.o: weights.cpp weights.h
 	$(CPP) -fPIC -c weights.cpp $(CFLAGS) $(OMPFLAGS) -o weights.o
 GP.o: GP.cpp GP.h weights.h
 	$(CPP) -fPIC -c GP.cpp $(CFLAGS) $(OMPFLAGS)

@@ -10,33 +10,90 @@ class Net(nn.Module):
   #Batch shape from input x is (3, 64, 64)
     def __init__(self):
         super(Net, self).__init__()
-        
-        # First Layer
-        self.conv1 = nn.Conv2d(in_channels=3,out_channels=16,kernel_size=4)
-        # Second
-        self.conv2 = nn.Conv2d(in_channels=16,out_channels=32,kernel_size=3)
-        # Third
-        self.conv3 = nn.Conv2d(in_channels=32,out_channels=8,kernel_size=2) 
-        # Final 
-        #8 * 58 * 58 = 26912
-        self.dense = nn.Linear(26912,12288, bias=False)
+        self.elu = nn.ELU()
+#       Padding Layer for kernel size 7
+        self.pad3= nn.ReflectionPad2d(3)
+#       Padding Layer for kernel size 5
+        self.pad2 = nn.ReflectionPad2d(2)
+#       Padding Layer for kernel size 3
+        self.pad1 = nn.ReflectionPad2d(1)
+
+#       input
+        self.conv1 = nn.Conv2d(in_channels=3 , out_channels=64, kernel_size=7)
+        self.conv1_bn = nn.BatchNorm2d(64)
+#       block 1
+        self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=7)
+        self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=7)
+#       block 2
+        self.conv4 = nn.Conv2d(in_channels=64, out_channels=64,kernel_size=5)
+        self.conv5 = nn.Conv2d(in_channels=64, out_channels=64,kernel_size=5)
+#       block 3
+        self.conv6 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=5)
+        self.conv7 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=5)
+#       block 4
+        self.conv8 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+        self.conv9 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+#       block 5
+        self.conv10 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+        self.conv11 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+#       block 6
+        self.conv12 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+        self.conv13 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3)
+#       output layer 
+        self.conv14 = nn.Conv2d(in_channels=64, out_channels=3, kernel_size=1)
+
         #out is (3, 64, 64)
-        
         if(torch.cuda.is_available()):
             self.cuda()
 
         
     def forward(self, x):
-      x = self.conv1(x)
-      x = F.relu(self.conv2(x))
-      x = F.relu(self.conv3(x)) 
-      x = x.view(x.size(0), -1) 
-      x = self.dense(x) # Combine the efforts of the convultions to deconcolve image 
-      x = x.view(-1,3,64,64) 
-      return x
+#input layer
+      z = self.conv1_bn(self.conv1(self.pad3(x)))
+# Residual Blocks
+    #block 1
+      y = self.elu(self.conv2(self.pad3(z)))
+      y = self.conv3(self.pad3(y))
+      x = z + y
+    #block 2
+      y = self.elu(self.conv4(self.pad2(x)))
+      y = self.conv5(self.pad2(y))
+      x = x + y
+    #block 3 
+      y = self.elu(self.conv6(self.pad2(x)))
+      y = self.conv7(self.pad2(y))
+      x = x + y
+    #block 4 
+      y = self.elu(self.conv8(self.pad1(x)))
+      y = self.conv9(self.pad1(y))
+      x = x + y
+    #block 5 
+      y = self.elu(self.conv10(self.pad1(x)))
+      y = self.conv11(self.pad1(y))
+      x = x + y
+    #block 6 
+      y = self.elu(self.conv12(self.pad1(x)))
+      y = self.conv13(self.pad1(y))
+      x = x + y
+# Output Layer
+ #     x = self.conv14(x)
+      x = x + z
+      x = self.conv14(x)
+      return x 
 
     def _initialize_weights(self):
-        I.xavier_uniform_(self.conv1.weight)
-        I.xavier_uniform_(self.conv2.weight, I.calculate_gain('relu'))
-        I.xavier_uniform_(self.conv3.weight, I.calculate_gain('relu'))
-        I.xavier_uniform_(self.dense.weight)
+      I.orthogonal_(self.conv1.weight)
+      I.orthogonal_(self.conv2.weight)
+      I.orthogonal_(self.conv3.weight)
+      I.orthogonal_(self.conv4.weight)
+      I.orthogonal_(self.conv5.weight)
+      I.orthogonal_(self.conv6.weight)
+      I.orthogonal_(self.conv7.weight)
+      I.orthogonal_(self.conv8.weight)
+      I.orthogonal_(self.conv9.weight)
+      I.orthogonal_(self.conv10.weight)
+      I.orthogonal_(self.conv11.weight)
+      I.orthogonal_(self.conv12.weight)
+      I.orthogonal_(self.conv13.weight)
+      I.orthogonal_(self.conv14.weight)
+

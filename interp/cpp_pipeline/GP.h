@@ -42,20 +42,21 @@ public:
 		return result; 
 	}
 #else
-    static
-	inline
-	float dot(const std::array<float, 9> &vec1, const std::array<float, 9> &vec2){
+    template <typename T>
+	static inline
+	float dot(const std::array<float, 9> &vec1, const std::array<T, 9> &vec2){
         float result = 0; 
         #pragma unroll
         for(int i = 0; i< 9; i++) result += vec1[i]*vec2[i]; 
 		return result; 
 	}
 #endif 
+    template <typename T, typename A>
 	inline
-	std::array<float, 9> load(const std::vector<float> &img_in, 
-		       	        	  const int j, const int i)
+	std::array<T, 9> load(const std::vector<T, A> &img_in, 
+		       	          const int j, const int i)
 	{
-		std::array<float, 9> result;
+		std::array<T, 9> result;
         int left = (i-1);
         int right = (i+1);
 		int id0 =  (j-1)*insize[0]; 
@@ -73,11 +74,12 @@ public:
 		return result; 	
 	}
  
+    template <typename T, typename A>
 	inline
-	std::array<float, 9> load_borders(const std::vector<float> &img_in, 
+	std::array<T, 9> load_borders(const std::vector<T, A> &img_in, 
                 		       		  const int j, const int i)
 	{
-		std::array<float, 9> result;
+		std::array<T, 9> result;
 		int bot = (j-1 < 0) ? 0 : j-1;
 		int left = (i-1 < 0) ? 0 : i-1; 
 		int top = (j+1 >= insize[1]) ? insize[1]-1 : j+1; 
@@ -97,8 +99,87 @@ public:
 		return result; 	
 	} 
 
-	void single_channel_interp(const std::vector<float> img_in, 
-		      std::vector<float> &img_out, const int ry, const int rx); 
+    template <typename T, typename A>
+	void single_channel_interp(const std::vector<T, A> img_in, 
+		      std::vector<float> &img_out, const int ry, const int rx) 
+    {
+    	const int outsize[2] = {insize[1]*ry, insize[0]*rx}; 
+    	/*------------------- Body -------------------------- */
+    #pragma omp parallel for	
+    	for( int j = 1; j < insize[1]-1; j++){
+    		for(int i = 1; i < insize[0]-1; i++){
+                auto cen = GP::load(img_in, j, i);
+    		    for(int idy = 0; idy < ry; idy++){
+    		        int jj = j*ry + idy;
+    		        int ind =jj*outsize[1];	
+    		        for(int idx = 0; idx < rx; idx++){
+    			        int ii = i*rx + idx; 
+    			        int idk = idx*ry + idy;
+    			        img_out[ind + ii] = GP::dot(weight[idk], cen); 
+    		            }
+    	            }
+    	      }
+    	}
+    	/*---------------- Borders ------------------------- */
+    	//================ bottom =========================
+    	int j = 0; 
+    #pragma omp parallel for
+    	for(int i = 0; i < insize[0]; i++){
+    		auto cen = GP::load_borders(img_in, j, i); 
+    		for(int idy = 0; idy < ry; idy++){
+    			int ind = idy*outsize[1];
+    			for(int idx = 0; idx < rx; idx++){
+    				int ii = idx + i*rx; 
+    				int idk = idx*ry + idy;
+    				img_out[ind + ii] = GP::dot(weight[idk], cen); 
+    			}
+    		}
+    	}
+    	//================= top =======================
+    	j = (insize[1]-1); 	
+    #pragma omp parallel for
+    	for(int i = 0; i < insize[0]; i++){
+    		auto cen = GP::load_borders(img_in, j, i); 
+    		for(int idy = 0; idy < ry; idy++){
+    			int jj = idy + j*ry; 	
+    			int ind = jj*outsize[1];
+    			for(int idx = 0; idx < rx; idx++){
+    				int ii = idx + i*rx;
+    				int idk = idx*ry + idy;
+    				img_out[ind + ii] = GP::dot(weight[idk], cen); 
+    			}
+    		}
+    	}
+    	//============== left =========================
+    	int i = 0; 
+    #pragma omp parallel for
+    	for(j = 0; j < insize[1]; j++){
+    		auto cen = GP::load_borders(img_in, j, i); 
+    		for(int idy = 0; idy < ry; idy++){
+    			int jj = idy + j*ry; 
+    			int ind =jj*outsize[1];
+    			for(int idx = 0; idx < rx; idx++){
+    				int idk = idx*ry + idy;
+    				img_out[ind + idx] = GP::dot(weight[idk], cen); 
+    			}
+    		}
+    	}
+    	//=============== right ======================
+    	i = (insize[0]-1); 
+    #pragma omp parallel for
+    	for(j = 0; j < insize[1]; j++){
+    		auto cen = GP::load_borders(img_in, j, i); 
+    		for(int idy = 0; idy < ry; idy++){
+    			int jj = idy + j*ry; 
+    			int ind = jj*outsize[1];
+    			for(int idx = 0; idx < rx; idx++){
+    				int ii = idx + i*rx; 
+    				int idk = idx*ry + idy;
+    				img_out[ind + ii] = GP::dot(weight[idk], cen); 
+    			}
+    		}
+    	}
+    }
 };
 
 #endif

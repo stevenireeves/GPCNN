@@ -7,8 +7,6 @@
 #include "weights.h"
 
 int main(int argc, char* argv[]){
-
-
 	cv::Mat img = cv::imread(argv[1], cv::IMREAD_COLOR);
     std::vector<cv::Mat> bgr_in;
     std::vector<cv::Mat> bgr_out;
@@ -46,5 +44,6 @@ int main(int argc, char* argv[]){
 	cv::imwrite("test_scale.png", img2);  
 /*	cv::imshow("testMat",img2);
 	cv::waitKey(0);*/ 
+    return 0;
 }
 

@@ -3,9 +3,9 @@
 #include "weights.h"
 #include <iostream>
 
-void driver(float *img_in, float *img_out, const int upsample_ratio[], const int in_size[]){
+void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], const int in_size[]){
     const float del[2] = {1.f/float(in_size[0]), 1.f/float(in_size[1])};
-    std::vector<float> img1(img_in, img_in + in_size[0]*in_size[1]); 
+    std::vector<unsigned char> img1(img_in, img_in + in_size[0]*in_size[1]); 
     weights wgts(upsample_ratio, del); 
     const int size[3] = {in_size[0], in_size[1], 1}; 
     GP interp(wgts, size); 
@@ -37,7 +37,8 @@ void driver_color(float *bin, float *gin, float *rin,
 
 extern "C"
 {
-	void interpolate(float *img_in, float *img_out, const int *upsample_ratio, const int *in_size){
+	void interpolate(unsigned char *img_in, float *img_out, 
+                     const int *upsample_ratio, const int *in_size){
 			driver(img_in, img_out, upsample_ratio, in_size); 
 	}
 

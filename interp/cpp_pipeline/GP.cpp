@@ -2,7 +2,8 @@
 #include <omp.h>
 #include "GP.h" 
 
-void GP::single_channel_interp(const std::vector<float> img_in,
+template<typename T, typename A>
+void GP::single_channel_interp(const std::vector<T, A> img_in,
 			  std::vector<float> &img_out, const int ry, const int rx)
 {
 	const int outsize[2] = {insize[1]*ry, insize[0]*rx}; 

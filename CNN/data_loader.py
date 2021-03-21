@@ -2,15 +2,58 @@ import torch
 import cv2
 import numpy as np
 import os
+import ctypes
+import numpy.ctypeslib as npct
+
+libinterp = ctypes.cdll.LoadLibrary('../interp/cpp_pipeline/interp.so')
+interpolate = libinterp.interpolate_color
+interpolate.restype = None
+interpolate.argtypes = [npct.ndpointer(ctypes.c_float), 
+                        npct.ndpointer(ctypes.c_float),
+                        npct.ndpointer(ctypes.c_float), 
+                        npct.ndpointer(ctypes.c_float),
+                        npct.ndpointer(ctypes.c_float), 
+                        npct.ndpointer(ctypes.c_float),
+                        npct.ndpointer(ctypes.c_int), npct.ndpointer(ctypes.c_int)]
+
+def gp4(img):
+  size = np.asarray(img.shape, dtype=np.int32)
+  upsamp = np.array([4, 4],dtype=np.int32)
+  img_out = np.zeros((size[0]*upsamp[0], size[1]*upsamp[1],3) , dtype=np.float32)
+  interpolate(img[:,:,0].astype(np.float32),
+              img[:,:,1].astype(np.float32),
+              img[:,:,2].astype(np.float32),
+              img_out[:,:,0], img_out[:,:,1], img_out[:,:,2],
+              upsamp, np.array([size[1], size[0]], dtype=np.int32))
+  for i in range(3):
+      print(i)
+      print(img_out[-1, -1, i])
+#      interpolate(img[:,:,i].flatten().astype(np.float32), img_out[:,i], 
+#            upsamp, np.array([size[1], size[0]], dtype=np.int32))
+#      print(img_out[:,i].reshape((size[0]*4, size[1]*4)))
+  np.savetxt('test.txt', img_out[:,:,0])
+  img_out = img_out.reshape((size[0]*upsamp[0], size[1]*upsamp[1], 3))
+  quit()
+#  print(img_out)
+  return img_out
+
+def split(img):
+  print(img)
+  sx, sy = img.shape[:2]
+  rx = sx - np.remainder(sx, 128)
+  ry = sy - np.remainder(sy, 128)
+  img = img[:rx, :ry, :]
+  return img.reshape((-1,128,128,3)).astype(np.uint8)
 
 def get_train_objs(path_train, path_gt):
   td = os.listdir(path_train)
   n = len(td)
-  train_obj = np.zeros((n, 128, 128, 3), dtype=np.uint8)
-  gt_obj = np.zeros((n, 128, 128, 3), dtype = np.uint8)
+  train_obj = [] # = np.zeros((n, 128, 128, 3), dtype=np.uint8)
+  gt_obj = [] #np.zeros((n, 128, 128, 3), dtype = np.uint8)
   for i, fil in enumerate(td):
-      train_obj[i] = cv2.imread(path_train+fil)
-      gt_obj[i] = cv2.imread(path_gt+fil)
+      print(path_train+fil)
+      train_obj.append(split(gp4(cv2.imread(path_train+fil))))
+      gt_obj.append(split(cv2.imread(path_gt+fil)))
   return train_obj, gt_obj
 
 def get_test_objs(gp_test, gt_test, num):
@@ -24,6 +67,8 @@ def get_test_objs(gp_test, gt_test, num):
         valid_gt.append(cv2.imread(gt_test+fil))
       else:
         break
+  valid_gp = np.asarray(valid_gp).reshape((-1,128,128,3))
+  valid_gt = np.asarray(valid_gt).reshape((-1,128,128,3))
   return valid_gp, valid_gt
 
 def transform_patches(p_in, p_gt):

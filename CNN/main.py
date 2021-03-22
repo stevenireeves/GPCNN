@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.cuda.amp import autocast
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from model import Net

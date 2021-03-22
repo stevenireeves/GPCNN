@@ -46,7 +46,7 @@ class Net(nn.Module):
         if(torch.cuda.is_available()):
             self.cuda()
 
-        
+    @autocast()        
     def forward(self, x):
 #input layer
       z = self.conv1_bn(self.conv1(self.pad3(x)))

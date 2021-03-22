@@ -1,11 +1,13 @@
 import os
 import random 
 
-import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from torch.cuda.amp import GradScaler 
+
+import numpy as np
+import matplotlib.pyplot as plt
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from model import Net
@@ -27,9 +29,10 @@ else:
   model = model.to(device)
 criterion = nn.L1Loss()
 optimizer = optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+scaler = GradScaler()
 #optimizer = optim.Adam(model.parameters(), lr=0.001) 
 scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
-batch_size = 32 #400
+batch_size = 64 #400
 training_loss = []
 validation_loss = []
 num = 10
@@ -47,8 +50,9 @@ def train(epoch, train_obj, gt_obj, i):
       loss = criterion(model(train_x), train_y)
       epoch_loss += loss.item()
       batch_loss += loss.item()
-      loss.backward()
-      optimizer.step()
+      scaler.scale(loss).backward()
+      scaler.step(optimizer)
+      scaler.update()
       if(idy%100==0):
         if(idy > 0):
           batch_loss/=100 

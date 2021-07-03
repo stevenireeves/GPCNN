@@ -1,4 +1,4 @@
-CFLAGS = -std=c++11 -ffast-math -O3 -I/usr/local/opt/lapack/include -L/usr/local/opt/lapack/lib -lblas -llapacke
+CFLAGS = -std=c++11 -O3 -I/usr/local/opt/lapack/include -L/usr/local/opt/lapack/lib -lblas -llapacke
 ifdef USE_OMP
 	OMPFLAGS= -fopenmp
 else
@@ -13,25 +13,41 @@ else
 	OMPINCLUDE=
 endif
 CPP = clang++
-interp.dylib: interp.cpp GP.o weights.o
-	$(CPP) $(CFLAGS) $(OMPINCLUDE) $(OMPFLAGS)  -dynamiclib  -o interp.dylib interp.cpp GP.o weights.o
+interp.dylib: interp.cpp  weights.o
+	$(CPP) $(CFLAGS) $(OMPINCLUDE) $(OMPFLAGS)  -dynamiclib  -o interp.dylib interp.cpp  weights.o
 
 weights.o: weights.cpp weights.h
 	$(CPP) $(CFLAGS) $(OMPINCLUDE) $(OMPFLAGS)  -c weights.cpp
-GP.o: GP.cpp GP.h weights.h
-	$(CPP) $(CFLAGS) $(OMPINCLUDE) $(OMPFLAGS)  -c GP.cpp
 
 clean:
-	rm GP.o weights.o interp.dylib
+	rm  weights.o interp.dylib
 
 else ifeq ($(platform),Linux)
+ifdef CUDA
+-DUSE_CUDA=TRUE
+-DUSE_GPU=TRUE
+CPP=nvcc
+interp.so: interp.cpp GP.h weights.o
+	$(CPP) --compiler-options -fPIC -shared -o interp.so interp.cpp weights.o $(CFLAGS) 
+weights.o: weights.cpp weights.h
+	$(CPP) --compiler-options -fPIC -c weights.cpp $(CFLAGS) -o weights.o
+
+else ifdef AMD
+-DUSE_GPU=TRUE
+-DUSE_HIP=TRUE
+CPP=hipcc
+interp.so: interp.cpp GP.h weights.o
+	$(CPP) --compiler-options -fPIC -shared -o interp.so interp.cpp weights.o $(CFLAGS) 
+weights.o: weights.cpp weights.h
+	$(CPP) --compiler-options -fPIC -c weights.cpp $(CFLAGS) -o weights.o
+
+else
 CPP = g++
 interp.so: interp.cpp GP.h weights.o
 	$(CPP) -fPIC -shared -o interp.so interp.cpp weights.o $(CFLAGS) $(OMPFLAGS) 
 weights.o: weights.cpp weights.h
 	$(CPP) -fPIC -c weights.cpp $(CFLAGS) $(OMPFLAGS) -o weights.o
-# GP.o: GP.cpp GP.h weights.h
-#	$(CPP) -fPIC -c GP.cpp $(CFLAGS) $(OMPFLAGS)
+endif
 clean:
-	rm GP.o weights.o interp.so
+	rm  weights.o interp.so
 endif

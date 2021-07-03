@@ -25,20 +25,16 @@ superres.ex: main.cpp GP.h weights.o
 
 weights.o: weights.cpp weights.h
 	$(CPP) $(CFLAGS) $(OMPFLAGS) $(DB) -c weights.cpp
-# GP.o: GP.cpp GP.h weights.h
-# 	$(CPP) $(CFLAGS) $(OMPFLAGS) $(DB) -c GP.cpp
 
 else ifeq ($(platform),Linux)
 CPP = g++
 all: superres.ex
 
 superres.ex: main.cpp GP.h weights.o
-	$(CPP) -o superres.ex main.cpp weights.o $(CFLAGS) $(PKG) $(OMPFLAGS) $(DB) 
+	$(CPP) -o superres.ex main.cpp weights.o $(CFLAGS) $(PKG) $(OMPFLAGS) $(DB)
 
 weights.o: weights.cpp weights.h
-	$(CPP) -c weights.cpp $(CFLAGS) $(OMPFLAGS) $(DB) 
-#GP.o: GP.cpp GP.h weights.h
-#	$(CPP)  -c GP.cpp $(CFLAGS) $(OMPFLAGS) $(DB)
+	$(CPP) -c weights.cpp $(CFLAGS) $(OMPFLAGS) $(DB) -o weights.o
 endif 
 clean:
-	rm -f superres.ex GP.o weights.o 
+	rm -f superres.ex weights.o 

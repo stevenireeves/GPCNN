@@ -27,8 +27,10 @@ ifdef CUDA
 -DUSE_CUDA=TRUE
 -DUSE_GPU=TRUE
 CPP=nvcc
-interp.so: interp.cpp GP.h weights.o
-	$(CPP) --compiler-options -fPIC -shared -o interp.so interp.cpp weights.o $(CFLAGS) 
+interp.so: interp.o weights.o 
+	$(CPP) $(CFLAGS) -shared weights.o interp.o -o interp.so 
+interp.o: interp.cpp GP.h weights.o
+	$(CPP) --compiler-options -fPIC -c -x cu interp.cpp -o interp.o $(CFLAGS) -D USE_GPU=TRUE 
 weights.o: weights.cpp weights.h
 	$(CPP) --compiler-options -fPIC -c weights.cpp $(CFLAGS) -o weights.o
 

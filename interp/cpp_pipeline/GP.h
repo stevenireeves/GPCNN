@@ -75,19 +75,34 @@ public:
 #ifdef USE_GPU
     template <typename T>
     inline __device__ 
-    std::array<T, 9> load(const T img_in[],
-                          const int j, const int i)
+    void load(const T img_in[], T sten[],
+              const int j, const int i)
+    {
+        int left = (i-1);
+        int right = (i+1);
+        int id0 =  (j-1)*insize[0]; 
+        int id1 =  j*insize[0]; 
+        int id2 =  (j+1)*insize[0];
+        sten[0] = img_in[id0 + left];
+        sten[1] = img_in[id1 + left];
+        sten[2] = img_in[id2 + left];
+        sten[3] = img_in[id0 + i];
+        sten[4] = img_in[id1 + i];
+        sten[5] = img_in[id2 + i]; 
+        sten[6] = img_in[id0 + right];
+        sten[7] = img_in[id1 + right]; 
+        sten[8] = img_in[id2 + right];
+    }
 #else
     template <typename T, typename A>
     inline
     std::array<T, 9> load(const std::vector<T, A> &img_in, 
 		       	  const int j, const int i)
-#endif
     {
         int left = (i-1);
         int right = (i+1);
-	int id0 =  (j-1)*insize[0]; 
-	int id1 =  j*insize[0]; 
+        int id0 =  (j-1)*insize[0]; 
+        int id1 =  j*insize[0]; 
         int id2 =  (j+1)*insize[0];
         std::array<T, 9> result = {
                          img_in[id0 + left],
@@ -102,28 +117,47 @@ public:
 	}; 
 	return result; 	
     }
+#endif
 
 
 #ifdef USE_GPU
     template <typename T>
     inline  __device__
-    std::array<T, 9> load_borders(const T img_in[],
+    void load_borders(const T img_in[], T sten[],
                           const int j, const int i)
+    {
+        int bot = (j-1 < 0) ? 0 : j-1;
+        int left = (i-1 < 0) ? 0 : i-1; 
+        int top = (j+1 >= insize[1]) ? insize[1]-1 : j+1; 
+        int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
+        int id0 =  bot*insize[0]; 
+        int id1 =  j*insize[0]; 
+        int id2 =  top*insize[0];
+        sten[0] = img_in[id0 + left];
+        sten[1] = img_in[id1 + left];
+        sten[2] = img_in[id2 + left];
+        sten[3] = img_in[id0 + i];
+        sten[4] = img_in[id1 + i];
+        sten[5] = img_in[id2 + i]; 
+        sten[6] = img_in[id0 + right];
+        sten[7] = img_in[id1 + right]; 
+        sten[8] = img_in[id2 + right];
+    }
+
 #else 
     template <typename T, typename A>
 	inline
 	std::array<T, 9> load_borders(const std::vector<T, A> &img_in, 
                 		       		  const int j, const int i)
-#endif 
 	{
-		int bot = (j-1 < 0) ? 0 : j-1;
-		int left = (i-1 < 0) ? 0 : i-1; 
-		int top = (j+1 >= insize[1]) ? insize[1]-1 : j+1; 
-		int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
-		int id0 =  bot*insize[0]; 
-		int id1 =  j*insize[0]; 
-                int id2 =  top*insize[0];
-		std::array<T, 9> result = {
+        int bot = (j-1 < 0) ? 0 : j-1;
+        int left = (i-1 < 0) ? 0 : i-1; 
+        int top = (j+1 >= insize[1]) ? insize[1]-1 : j+1; 
+        int right = (i+1 >= insize[0]) ? insize[0]-1 : i+1;
+        int id0 =  bot*insize[0]; 
+        int id1 =  j*insize[0]; 
+        int id2 =  top*insize[0];
+        std::array<T, 9> result = {
                          img_in[id0 + left],
                          img_in[id1 + left],
                          img_in[id2 + left],
@@ -136,12 +170,13 @@ public:
 	}; 
 		return result; 	
 	} 
+#endif 
 
 
 #ifdef USE_GPU
     template <typename T>
         static inline
-	__device__ float dot(const float vec1[], const std::array<T,9> vec2, const int idk){
+	__device__ float dot(const float vec1[], const T vec2[], const int idk){
 	int stride = idk*9; 
         float result = vec1[stride + 0]*vec2[0] + vec1[stride + 1]*vec2[1]
                      + vec1[stride + 2]*vec2[2] + vec1[stride + 3]*vec2[3]
@@ -258,12 +293,13 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
     const int outsize[2] = {gp.insize[1]*ry, gp.insize[0]*rx}; 
     const int i = threadIdx.x + blockIdx.x*blockDim.x;
     const int j = threadIdx.y + blockIdx.y*blockDim.y; 
+    T cen[9]; 
     if(j > 0 && j < gp.insize[1]-1 && i > 0 && i < gp.insize[0]){
-       std::array<T, 9> cen = gp.load(img_in, j, i);
+       gp.load(img_in, cen, j, i);
        for(int idy = 0; idy < ry; idy++){
            int jj = j*ry + idy;
            int ind =jj*outsize[1];	
-   	    for(int idx = 0; idx < rx; idx++){
+   	        for(int idx = 0; idx < rx; idx++){
                    int ii = i*rx + idx; 
                    int idk = idx*ry + idy;
                    img_out[ind + ii] = GP::dot(gp.weight, cen, idk); 
@@ -273,7 +309,7 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
     /*---------------- Borders ------------------------- */
     //================ bottom =========================
     if(j == 0){ 
-        std::array<T, 9> cen = gp.load_borders(img_in, j, i); 
+        gp.load_borders(img_in, cen, j, i); 
         for(int idy = 0; idy < ry; idy++){
             int ind = idy*outsize[1];
             for(int idx = 0; idx < rx; idx++){
@@ -285,7 +321,7 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
     }
 	//================= top =======================
 	else if(j == (gp.insize[1]-1)){
-		auto cen = gp.load_borders(img_in, j, i); 
+		gp.load_borders(img_in, cen, j, i); 
 		for(int idy = 0; idy < ry; idy++){
 			int jj = idy + j*ry; 	
 			int ind = jj*outsize[1];
@@ -298,7 +334,7 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
 	}
 	//============== left =========================
 	if(i == 0){ 
-		auto cen = gp.load_borders(img_in, j, i); 
+		gp.load_borders(img_in, cen, j, i); 
 		for(int idy = 0; idy < ry; idy++){
 			int jj = idy + j*ry; 
 			int ind =jj*outsize[1];
@@ -310,7 +346,7 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
 	}
 	//=============== right ======================
 	else if(i == (gp.insize[0]-1)){ 
-		auto cen = gp.load_borders(img_in, j, i); 
+		gp.load_borders(img_in, cen, j, i); 
 		for(int idy = 0; idy < ry; idy++){
 			int jj = idy + j*ry; 
 			int ind = jj*outsize[1];

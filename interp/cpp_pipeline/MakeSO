@@ -38,8 +38,10 @@ HIP_PLATFORM = $(shell $(HIP_PATH)/bin/hipconfig --platform)
 HIP_INCLUDE = -I${HIP_PATH}/include
 -DUSE_GPU=TRUE
 CPP=$(HIP_PATH)/bin/hipcc
-interp.so: interp.cpp GP.h weights.o
-	$(CPP) $(CFLAGS) --genco -fPIC -shared -c weights.o interp.cpp -o interp.so -D USE_GPU=TRUE -D __HIP_PLATFORM_AMD__  ${HIP_INCLUDE} 
+interp.so: interp.o weights.o 
+	$(CPP) $(CFLAGS) -fPIC -shared weights.o interp.o -o interp.so 
+interp.o: interp.cpp GP.h weights.o
+	$(CPP) $(CFLAGS) -fPIC -c weights.o interp.cpp -o interp.o -D USE_GPU=TRUE -D __HIP_PLATFORM_AMD__  ${HIP_INCLUDE} 
 weights.o: weights.cpp weights.h
 	$(CPP) $(CFLAGS) -fPIC -c weights.cpp 
 else

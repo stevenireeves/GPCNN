@@ -33,14 +33,15 @@ weights.o: weights.cpp weights.h
 	$(CPP) --compiler-options -fPIC -c weights.cpp $(CFLAGS) -o weights.o
 
 else ifdef AMD
+HIP_PATH ?= /opt/rocm/hip
+HIP_PLATFORM = $(shell $(HIP_PATH)/bin/hipconfig --platform)
+HIP_INCLUDE = -I${HIP_PATH}/include
 -DUSE_GPU=TRUE
--DUSE_HIP=TRUE
-CPP=hipcc
+CPP=$(HIP_PATH)/bin/hipcc
 interp.so: interp.cpp GP.h weights.o
-	$(CPP) --compiler-options -fPIC -shared -o interp.so interp.cpp weights.o $(CFLAGS) 
+	$(CPP) $(CFLAGS) --genco -fPIC -shared -c weights.o interp.cpp -o interp.so -D USE_GPU=TRUE -D __HIP_PLATFORM_AMD__  ${HIP_INCLUDE} 
 weights.o: weights.cpp weights.h
-	$(CPP) --compiler-options -fPIC -c weights.cpp $(CFLAGS) -o weights.o
-
+	$(CPP) $(CFLAGS) -fPIC -c weights.cpp 
 else
 CPP = g++
 interp.so: interp.cpp GP.h weights.o

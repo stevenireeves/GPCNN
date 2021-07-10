@@ -8,7 +8,7 @@ void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], c
     weights wgts(upsample_ratio, del); 
     const int size[3] = {in_size[0], in_size[1], 1}; 
     GP interp(wgts, size); 
-#if USE_GPU
+#ifdef USE_GPU
     unsigned char *img1;
     float *img2; 
     size_t img1_size = size[0]*size[1]*sizeof(unsigned char); 
@@ -19,7 +19,7 @@ void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], c
         cudaMalloc(&img1, img1_size);
         cudaMalloc(&img2, img2_size);
         cudaMemcpy(img1, img_in, img1_size, cudaMemcpyHostToDevice);
-        interp.single_channel_interp<<<dimGrid, dimBlock>>>(img1, img2, upsample_ratio[0], upsample_ratio[1]);
+        single_channel_interp<<<dimGrid, dimBlock>>>(img1, img2, interp, upsample_ratio[0], upsample_ratio[1]);
         cudaMemcpy(img_out, img2, img2_size, cudaMemcpyDeviceToHost);
         cudaFree(img1);
         cudaFree(img2);
@@ -27,8 +27,7 @@ void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], c
         hipMalloc(&img1, img1_size);
         hipMalloc(&img2, img2_size);
         hipMemcpy(img1, img_in, img1_size, hipMemcpyHostToDevice);
-        hipLaunchKernelGGL(interp.single_channel_interp, dimGrid, dimBlock,
-                           img1, img2, upsample_ratio[0], upsample_ratio[1]);
+        single_channel_interp<<<dimGrid, dimBlock>>>(img1, img2, interp, upsample_ratio[0], upsample_ratio[1]);
         hipMemcpy(img_out, img2, img2_size, hipMemcpyDeviceToHost);
         hipFree(img1);
         hipFree(img2);
@@ -41,6 +40,7 @@ void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], c
 #endif
 }
 
+#ifndef USE_GPU
 void driver_color(float *bin, float *gin, float *rin, 
                   float *bout, float *gout, float *rout,
                   const int upsample_ratio[], const int in_size[]){
@@ -61,6 +61,7 @@ void driver_color(float *bin, float *gin, float *rin,
     std::copy(g2.begin(), g2.end(), gout); 
     std::copy(r2.begin(), r2.end(), rout); 
 }
+#endif 
 
 extern "C"
 {
@@ -69,6 +70,7 @@ extern "C"
 			driver(img_in, img_out, upsample_ratio, in_size); 
 	}
 
+#ifndef USE_GPU
     void interpolate_color(float *b_in, float *g_in, float* r_in, 
                            float *b_out, float *g_out, float *r_out, 
                            const int *upsample_ratio, const int *in_size){
@@ -76,6 +78,7 @@ extern "C"
                          b_out, g_out, r_out, 
                          upsample_ratio, in_size);
 	}
+#endif
 }
 
 

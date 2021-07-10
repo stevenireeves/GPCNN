@@ -12,7 +12,7 @@ void driver(unsigned char *img_in, float *img_out, const int upsample_ratio[], c
     unsigned char *img1;
     float *img2; 
     size_t img1_size = size[0]*size[1]*sizeof(unsigned char); 
-    size_t img2_size = size[0]*size[1]*sizeof(float);
+    size_t img2_size = size[0]*size[1]*upsample_ratio[0]*upsample_ratio[1]*sizeof(float);
     dim3 dimBlock(32, 32); 
     dim3 dimGrid(size[0]/dimBlock.x, size[1]/dimBlock.y); 
     #ifdef __CUDACC__

@@ -107,7 +107,7 @@ public:
 #ifdef USE_GPU
     template <typename T>
     inline  __device__
-    std::array<T, 9> load_borders(const T* img_in,
+    std::array<T, 9> load_borders(const T img_in[],
                           const int j, const int i)
 #else 
     template <typename T, typename A>
@@ -258,9 +258,8 @@ __global__ void single_channel_interp(const T* img_in, float* img_out, GP gp,
     const int outsize[2] = {gp.insize[1]*ry, gp.insize[0]*rx}; 
     const int i = threadIdx.x + blockIdx.x*blockDim.x;
     const int j = threadIdx.y + blockIdx.y*blockDim.y; 
-    if(j != 0 && j != gp.insize[1]-1 && i != 0 && i != gp.insize[0]){
+    if(j > 0 && j < gp.insize[1]-1 && i > 0 && i < gp.insize[0]){
        std::array<T, 9> cen = gp.load(img_in, j, i);
-   
        for(int idy = 0; idy < ry; idy++){
            int jj = j*ry + idy;
            int ind =jj*outsize[1];	

@@ -22,7 +22,7 @@ class Net(nn.Module):
 
 #       input
         self.conv1 = nn.Conv2d(in_channels=3 , out_channels=64, kernel_size=7)
-        self.conv1_bn = nn.BatchNorm2d(64)
+#        self.conv1_bn = nn.BatchNorm2d(64)
 #       block 1
         self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=7)
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=7)
@@ -51,7 +51,7 @@ class Net(nn.Module):
     @autocast()        
     def forward(self, x):
 #input layer
-      z = self.conv1_bn(self.conv1(self.pad3(x)))
+      z = self.conv1(self.pad3(x))
 # Residual Blocks
     #block 1
       y = self.elu(self.conv2(self.pad3(z)))
@@ -79,7 +79,7 @@ class Net(nn.Module):
       x = x + y
 # Output Layer
  #     x = self.conv14(x)
-      x = x + z
+#      x = x + z
       x = self.conv14(x)
       return x 
 

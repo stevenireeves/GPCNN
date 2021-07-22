@@ -1,5 +1,19 @@
 import numpy as np
 
+import ctypes
+import numpy.ctypeslib as npct
+
+libinterp = ctypes.cdll.LoadLibrary('../cpp_pipeline/interp.so')
+interpolate = libinterp.interpolate_color
+interpolate.restype = None
+interpolate.argtypes = [npct.ndpointer(ctypes.c_ubyte), npct.ndpointer(ctypes.c_ubyte),
+                        npct.ndpointer(ctypes.c_ubyte), npct.ndpointer(ctypes.c_float),
+                        npct.ndpointer(ctypes.c_float), npct.ndpointer(ctypes.c_float),
+                        npct.ndpointer(ctypes.c_int), npct.ndpointer(ctypes.c_int)]
+
+
+
+
 def loadsten(dat):
     return np.array([dat[0, 0], dat[1, 0], dat[2, 0],
                      dat[0, 1], dat[1, 1], dat[2, 1],
